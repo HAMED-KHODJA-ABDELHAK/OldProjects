@@ -5,7 +5,7 @@ include ../Make.defines
 LIBS+=-lmpi
 
 SRC_DIR=.
-EXE_DIR=./demo
+EXE_DIR=./bin
 
 EXES = \
 	${EXE_DIR}/first \
