@@ -5,11 +5,13 @@ include ../Make.defines
 LIBS+=-lmpi
 
 SRC_DIR=.
-EXE_DIR=./bin
+EXE_DIR=./demo
 
 EXES = \
 	${EXE_DIR}/first \
 	${EXE_DIR}/send \
+	${EXE_DIR}/sendAdv \
+	${EXE_DIR}/oddEvenSort \
 
 ${EXE_DIR}/%: %.o 
 	${CC} ${LIBS} -o $@ $< 
