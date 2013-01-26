@@ -51,7 +51,7 @@ EXT_OBJ:=.o
 EXT_ARC:=.a
 
 # Common libs
-LIBS:=-lmpi -lm  
+LIBS:=-lm  
 TESTLIBS:=-lcpptest
 BOOSTLIBS:=-lboost_date_time -lboost_filesystem -lboost_graph -lboost_iostreams -lboost_math_c99 -lboost_math_tr1 -lboost_mpi -lboost_prg_exec_monitor -lboost_program_options -lboost_python -lboost_regex -lboost_serialization -lboost_signals -lboost_system -lboost_thread -lboost_unit_test_framework -lboost_wave
 

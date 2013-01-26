@@ -2,7 +2,7 @@
 # A few variables
 include ../Make.defines
 
-LIBS+=-lmpi
+.PHONY: all clean
 
 SRC_DIR=.
 EXE_DIR=./demo
