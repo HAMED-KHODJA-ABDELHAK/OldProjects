@@ -1,0 +1,24 @@
+# Make file for main project.
+# A few variables
+include ../Make.defines
+
+.PHONY: all clean
+
+SRC_DIR=.
+EXE_DIR=./demo
+
+EXES = \
+	${EXE_DIR}/piCalc_serial \
+	${EXE_DIR}/piCalc_parallel \
+	${EXE_DIR}/piCalc_spawn \
+
+${EXE_DIR}/%: %.o 
+	${CC} ${LIBS} -o $@ $< 
+
+%.o: ${SRC_DIR}/%.c
+	${CC} $(CFLAGS) $(F_DEBUG) -o $@ -c $< 
+
+all: ${EXES}
+
+clean:
+	$(RM) $(EXES) $(FILES_TO_CLEAN)          
