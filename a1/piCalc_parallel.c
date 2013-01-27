@@ -76,7 +76,7 @@ int main (int argc, char *argv[])
 	printf("MPI task %d has started...\n", taskid);
 
 	/* Set seed for random number generator equal to task ID */
-	srandom(taskid);
+	srand(taskid);
 
 	avepi = 0;
 	for (i = 0; i < ROUNDS; i++) {
@@ -148,9 +148,9 @@ double dboard(int darts)
 	/* "throw darts at board" */
 	for (n = 1; n <= darts; n++)  {
 		/* generate random numbers for x and y coordinates */
-		r = (double)random()/cconst;
+		r = (double)rand()/cconst;
 		x_coord = (2.0 * r) - 1.0;
-		r = (double)random()/cconst;
+		r = (double)rand()/cconst;
 		y_coord = (2.0 * r) - 1.0;
 
 		/* if dart lands in circle, increment score */
