@@ -8,9 +8,9 @@ SRC_DIR=.
 EXE_DIR=./demo
 
 EXES = \
-	${EXE_DIR}/piCalc_serial \
-	${EXE_DIR}/piCalc_parallel \
-	${EXE_DIR}/piCalc_spawn \
+	${EXE_DIR}/serial_piCalc \
+	${EXE_DIR}/parallel_piCalc \
+	${EXE_DIR}/spawn_piCalc \
 
 ${EXE_DIR}/%: %.o 
 	${CC} ${LIBS} -o $@ $< 
