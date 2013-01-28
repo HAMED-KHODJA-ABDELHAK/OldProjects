@@ -75,6 +75,11 @@ int main (int argc, char *argv[])
 	MPI_Comm_rank(MPI_COMM_WORLD,&taskid);
 	printf("MPI task %d has started...\n", taskid);
 
+	double start_time = 0.0;
+	if (taskid == MASTER) {
+		start_time = MPI_Wtime();
+	}
+
 	/* Set seed for random number generator equal to task ID */
 	srand(taskid);
 
@@ -108,8 +113,10 @@ int main (int argc, char *argv[])
 					(DARTS * (i + 1)),avepi);
 		}
 	}
-	if (taskid == MASTER)
+	if (taskid == MASTER) {
 		printf ("\nReal value of PI: 3.1415926535897 \n");
+		printf("Operation took %f seconds.\n", MPI_Wtime() - start_time);
+	}
 
 	MPI_Finalize();
 	return 0;
