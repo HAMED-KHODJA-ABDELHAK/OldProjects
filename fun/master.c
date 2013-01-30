@@ -45,23 +45,14 @@ void error(char *str) {
  * Main loop of the function.
  */
 int main(int argc, char **argv) {
-	int rank, size, uni_size, *uni_sizep, flag;
-	char worker_name[] = "worker";
+	int rank, size, uni_size = 4;
+	char worker_name[] = "./demo/worker";
 	MPI_Comm everyone;
 
 	MPI_Init(&argc, &argv);
 
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-	MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_UNIVERSE_SIZE, &uni_sizep, &flag);
-
-	if (!flag) {
-		printf("This MPI does not support uni_size. How many processes total?\n");
-		scanf("%d", &uni_size);
-	} else {
-		uni_size = *uni_sizep;
-	}
 
 	if (uni_size == 1) 
 		error("No room to start workers.");
