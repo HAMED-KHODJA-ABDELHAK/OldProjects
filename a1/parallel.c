@@ -17,18 +17,6 @@
 #define sqr(x)	((x)*(x))
 
 /****************************** Type Definitions **************************************************/
-/* For enums: Try to namesapce the common elements. 
- * typedef enum {
- *	VAL_,
- * } name_e; 
- */
-
-/* For structs: 
- * typedef struct nam_s {
- *	int index;
- * } name_t;  
- */
-
 double dboard(int);
 
 /****************************** Static Data Definitions *******************************************/
