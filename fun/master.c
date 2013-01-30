@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
 		error("No room to start workers.");
 	
 	MPI_Comm_spawn(worker_name, MPI_ARGV_NULL, uni_size-1,
-			MPI_INFO_NULL, 0, MPI_COMM_SELF, &everyone
+			MPI_INFO_NULL, 0, MPI_COMM_SELF, &everyone,
 			MPI_ERRCODES_IGNORE);
 
 	sleep(10);
