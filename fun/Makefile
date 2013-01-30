@@ -12,6 +12,8 @@ EXES = \
 	${EXE_DIR}/send \
 	${EXE_DIR}/sendAdv \
 	${EXE_DIR}/oddEvenSort \
+	${EXE_DIR}/master \
+	${EXE_DIR}/worker \
 
 ${EXE_DIR}/%: %.o 
 	${CC} ${LIBS} -o $@ $< 
