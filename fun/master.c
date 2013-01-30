@@ -1,5 +1,6 @@
 /**
- * Template C file. 
+ * Master used to spawn other processes.
+ * Use command: bsub -I -q COMP428 -n1 mpirun -spawn ./demo/master 6 from this dir.	 
  */
 /****************************** Header Files ******************************************************/
 /* C Headers */
@@ -45,7 +46,7 @@ void error(char *str) {
  * Main loop of the function.
  */
 int main(int argc, char **argv) {
-	int rank, size, uni_size = 4;
+	int rank, size, num_workers;
 	char worker_name[] = "./demo/worker";
 	MPI_Comm everyone;
 
@@ -54,14 +55,13 @@ int main(int argc, char **argv) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-	if (uni_size == 1) 
-		error("No room to start workers.");
-	
-	MPI_Comm_spawn(worker_name, MPI_ARGV_NULL, uni_size-1,
+	num_workers = atoi(*++argv);	
+
+	MPI_Comm_spawn(worker_name, MPI_ARGV_NULL, num_workers,
 			MPI_INFO_NULL, 0, MPI_COMM_SELF, &everyone,
 			MPI_ERRCODES_IGNORE);
 
-	sleep(10);
+	sleep(3);
 	printf("Master woke up.\n");
 
 	MPI_Finalize();
