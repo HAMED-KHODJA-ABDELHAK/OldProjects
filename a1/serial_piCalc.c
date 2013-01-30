@@ -5,15 +5,12 @@
 /* C Headers */
 #include <stdio.h>
 #include <stdlib.h> 
-#include <unistd.h>
 #include <time.h>
 
 /* Project Headers */ 
 #include "mpi.h"
 
 /****************************** Constants/Macros **************************************************/
-#define FALSE 0
-#define TRUE 1
 #define RADIUS 0.5
 
 /****************************** Type Definitions **************************************************/
@@ -46,11 +43,11 @@ int in_circle(double x, double y, double r) {
     return dist <= r*r;
 }
 
-int throw_darts(unsigned int rounds) {
+int throw_darts(unsigned long rnds) {
 	double x, y;
 	int cnt = 0;
 
-    for (unsigned long i = 0; i < rounds; ++i) {
+    for (unsigned long i = 0; i < rnds; ++i) {
         x = rand() / (float)RAND_MAX;
         y = rand() / (float)RAND_MAX;
 
@@ -65,22 +62,21 @@ int throw_darts(unsigned int rounds) {
  * Main loop of the function.
  */
 int main(int argc, char **argv) {
-	int rank, size, cnt;
+	int rank, size, cnt, rnds;
 	double start;
 
 	MPI_Init(&argc, &argv);	
-
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 
 	start = MPI_Wtime();
 	srand(time(NULL));
 
-	int rounds = atoi(*++argv);
-	printf("Num darts is: %d.\n", rounds);
-	cnt = throw_darts(rounds);
+	rnds = atoi(*++argv);
+	printf("Num darts is: %d.\n", rnds);
+	cnt = throw_darts(rnds);
 
-    printf("The number count was %d, the final value of PI is: %.40f.\n", cnt, (4.0 * cnt / rounds));
+    printf("The number count was %d, the final value of PI is: %.40f.\n", cnt, (4.0 * cnt / rnds));
 	printf("This program took %f seconds to complete.\n", MPI_Wtime() - start);
 
 	MPI_Finalize();
