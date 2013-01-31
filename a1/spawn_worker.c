@@ -85,21 +85,11 @@ int main(int argc, char **argv) {
 	/* Seed the rand function, get the passed number of rounds. */
 	srand(time(NULL) + rank);
 	rounds = atoi(*++argv);
-	printf("Will throw %d darts.\n", rounds);
-
-	if (parent == MPI_COMM_NULL)
-		error("No parent.");
-
-	MPI_Comm_remote_size(parent, &size);
-	if (size != 1)
-		error("Something wrong with parent.");
 
 	send_buf = throw_darts(rounds);
-	printf("I am a worker number %d of %d, %d darts hit.\n", rank, size, send_buf);
+//	printf("I am a worker number %d of %d, %d darts hit.\n", rank, size, send_buf);
 	
-	MPI_Reduce(&send_buf, &recv_buf, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-	if (rank == 0)
-		printf("PI: %d.\n", 4 * recv_buf/(size*rounds));
+	MPI_Reduce(&send_buf, &recv_buf, 1, MPI_INT, MPI_SUM, 0, parent);
 
 	MPI_Finalize();
 	
