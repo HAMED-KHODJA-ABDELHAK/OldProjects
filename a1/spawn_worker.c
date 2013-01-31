@@ -73,8 +73,7 @@ int throw_darts(unsigned long rnds) {
  * Main loop of the worker threads.
  */
 int main(int argc, char **argv) {
-	int rank, size, rounds;
-	int send_buf = 0, recv_buf = 0;
+	int rank, size, rounds, send_buf = 0, recv_buf = 0;
 	MPI_Comm parent;
 
 	/* Init process and get some important info. */
@@ -100,7 +99,7 @@ int main(int argc, char **argv) {
 	
 	MPI_Reduce(&send_buf, &recv_buf, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 	if (rank == 0)
-		printf("Reduced: %d.\n", recv_buf);
+		printf("PI: %d.\n", 4 * recv_buf/(size*rounds));
 
 	MPI_Finalize();
 	

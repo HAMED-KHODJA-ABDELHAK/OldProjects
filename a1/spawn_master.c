@@ -36,7 +36,7 @@
  */
 int main(int argc, char **argv) {
 	MPI_Comm everyone;
-	int rank, size, num_workers, total_rounds; 
+	int rank, size, num_workers, total_rounds, send_buf = 0, recv_buf = 0; 
 	char str_rounds[RNDS_LEN];
 
 	/* Process args. */
@@ -58,10 +58,12 @@ int main(int argc, char **argv) {
 	MPI_Comm_spawn(WORKER, w_args, num_workers,
 			MPI_INFO_NULL, 0, MPI_COMM_WORLD, &everyone,
 			MPI_ERRCODES_IGNORE);
+
+	sleep(3);
 	
 	/* Call reduce, this master contributes 0. recv_buf has total once finished. */	
-	//MPI_Reduce(&send_buf, &recv_buf, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-//	printf("Master received %d darts.\n", recv_buf);
+	MPI_Reduce(&send_buf, &recv_buf, 1, MPI_INT, MPI_SUM, 0, everyone);
+	printf("Master received %d darts.\n", recv_buf);
 
 	MPI_Finalize();
 	
