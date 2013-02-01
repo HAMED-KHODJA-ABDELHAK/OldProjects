@@ -101,12 +101,12 @@ int main (int argc, char *argv[])
 
 	/* Report final pi calculation, cleanup and report time taken. */
 	if (rank == MASTER) {
-		pi = (4.0 * hits / darts);
+		pi = (4.0 * all_hits / darts);
 		printf("The hit count was %d, the final value of PI is: %.40f.\n", hits, pi);
 		printf("The percent deviation from reference: %.10f%%\n", (pi - REAL_PI)/REAL_PI *100);
 		printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f.\n", MPI_Wtime() - start);
-		MPI_Finalize();
 	}
+	MPI_Finalize();
 
 	return 0;
 }
