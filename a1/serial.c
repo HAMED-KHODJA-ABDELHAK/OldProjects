@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
 	pi = (4.0 * hits / darts);
 	printf("The hit count was %d, the final value of PI is: %.40f.\n", hits, pi);
 	printf("The percent deviation from reference: %.10f%%\n", (pi - REAL_PI)/REAL_PI *100);
-	printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f.\n", MPI_Wtime() - start);
+	printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
 	MPI_Finalize();
 
 	return 0;
