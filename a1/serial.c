@@ -78,7 +78,7 @@ int throw_darts(unsigned long rnds) {
  */
 int main(int argc, char **argv) {
 	int rank, size, darts, hits = 0;
-	double start, end, pi;
+	double start, pi;
 
 	/* Start timing before init. */
 	start = MPI_Wtime();
