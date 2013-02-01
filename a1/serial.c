@@ -77,7 +77,7 @@ int throw_darts(unsigned long rnds) {
  * Main programming body, executes the dart throwing and reports to user the time taken.
  */
 int main(int argc, char **argv) {
-	int rank, size, cnt, rnds;
+	int rank, size, darts, hits = 0;
 	double start, pi;
 
 	/* Start timing before init. */
@@ -92,12 +92,12 @@ int main(int argc, char **argv) {
 	/* Get workload from command argument and execute. */
 	if (argc < 2)
 		usage();
-	rnds = atoi(*++argv);
-	cnt = throw_darts(rnds);
+	darts = atoi(*++argv);
+	hits = throw_darts(darts);
 
 	/* Report final pi calculation, cleanup and report time taken. */
-	pi = (4.0 * cnt / rnds);
-    printf("The number count was %d, the final value of PI is: %.40f.\n", cnt, pi);
+	pi = (4.0 * hits / darts);
+    printf("The number count was %d, the final value of PI is: %.40f.\n", hits, pi);
     printf("The percent deviation from reference: %.10f%%\n", (pi - REAL_PI)/REAL_PI *100);
 	MPI_Finalize();
 	printf("This program took %f seconds to complete.\n", MPI_Wtime() - start);
