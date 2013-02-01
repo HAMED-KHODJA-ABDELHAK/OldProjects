@@ -36,7 +36,7 @@
  */
 int main(int argc, char **argv) {
 	MPI_Comm everyone;
-	int rank, size, spawned_tasks, darts, hits = 0, all_hits = 0;
+	int rank, size, tasks, darts, hits = 0, all_hits = 0;
 	char str_rounds[RNDS_LEN];
 	double start, pi;
 
@@ -48,16 +48,16 @@ int main(int argc, char **argv) {
 
 	/* Process args. */
 	darts = atoi(*++argv);
-	spawned_tasks = atoi(*++argv);
+	tasks = atoi(*++argv);
 
 	/* Each process gets RNDS/n work. Calculate and put in string to pass. */
-	snprintf(str_rounds, RNDS_LEN, "%d", (int) darts/spawned_tasks);
+	snprintf(str_rounds, RNDS_LEN, "%d", (int) darts/tasks);
 	str_rounds[RNDS_LEN-1] = '\0';
 	char *w_args[] = {str_rounds, NULL};
-	printf("Work for each worker is %s.\n", str_rounds);
+	printf("Spawning %d slaves to throw %s.\n", str_rounds);
 
 	/* Spawn workers then block with reduce. */
-	MPI_Comm_spawn(SLAVE, w_args, spawned_tasks,
+	MPI_Comm_spawn(SLAVE, w_args, tasks,
 			MPI_INFO_NULL, 0, MPI_COMM_SELF, &everyone,
 			MPI_ERRCODES_IGNORE);
 
