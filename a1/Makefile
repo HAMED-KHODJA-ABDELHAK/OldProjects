@@ -11,7 +11,7 @@ EXES = \
 	${EXE_DIR}/serial \
 	${EXE_DIR}/parallel \
 	${EXE_DIR}/spawn_master \
-	${EXE_DIR}/spawn_worker \
+	${EXE_DIR}/spawn_slave \
 
 ${EXE_DIR}/%: %.o 
 	${CC} ${LIBS} -o $@ $< 
