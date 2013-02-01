@@ -1,12 +1,20 @@
 /**
- * Template C file. 
+ * Parallel implementation of pi calculation, used as baseline.
+ * Will throw darts/num_workers and then calculate PI.
+ * Reports the time taken and deviation from reference PI, reference is first line of
+ * 		(http://www.geom.uiuc.edu/~huberty/math5337/groupe/digits.html).
+ *
+ * Use command: bsub -I -q COMP428 -n <n> mpirun -srun ./demo/serial <darts>
+ * Arguments to serial:
+ * n: Number of other tasks to start at same time.
+ * darts: Number of darts to throw, basically the work load.
  */
 /****************************** Header Files ******************************************************/
 /* C Headers */
 #include <stdio.h>
-#include <stdlib.h> 
+#include <stdlib.h>
 
-/* Project Headers */ 
+/* Project Headers */
 #include "mpi.h"
 
 /****************************** Constants/Macros **************************************************/
