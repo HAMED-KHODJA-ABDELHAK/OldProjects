@@ -93,8 +93,8 @@ int main (int argc, char *argv[])
 	if (argc < 2)
 		usage();
 	darts = atoi(*++argv);
-	printf("MPI task %d starting to throw %d darts.\n", rank, darts);
-	hits = throw_darts(darts);
+	printf("MPI task %d starting to throw %d darts.\n", rank, darts/size);
+	hits = throw_darts(darts/size);
 
 	/* All tasks reduce to the master their hit counts. */
 	MPI_Reduce(&hits, &all_hits, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);
