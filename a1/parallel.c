@@ -21,7 +21,7 @@
 /****************************** Constants/Macros **************************************************/
 #define RADIUS 1.0
 #define REAL_PI 3.141592653589793238462643383279502884197169399375105820974944592307816406286
-#define MASTER 0        /* task ID of master task */
+#define MASTER 0
 
 /****************************** Type Definitions **************************************************/
 
@@ -77,24 +77,25 @@ int throw_darts(unsigned long rnds) {
 
 int main (int argc, char *argv[])
 {
-	int rank, size, darts, hits = 0, all_hits = 0;;
+	int rank, size, darts, darts_per_task, hits = 0, all_hits = 0;
 	double start, pi;
 
-	/* Start timing before init. */
-	start = MPI_Wtime();
 
-	/* Standard init for MPI. */
+
+	/* Standard init for MPI, start timer after init. */
 	MPI_Init(&argc, &argv);
+	start = MPI_Wtime();
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
-	srand(time(NULL) + rank);
+	srand(time(NULL) + rank*rank*rank);
 
 	/* Get workload from command argument and execute. */
 	if (argc < 2)
 		usage();
 	darts = atoi(*++argv);
-	printf("MPI task %d starting to throw %d darts.\n", rank, darts/size);
-	hits = throw_darts(darts/size);
+	darts_per_task = darts/size;
+	printf("%d tasks will now throw %d darts each and then reduce to master.\n", size, darts_per_task);
+	hits = throw_darts(darts_per_task);
 
 	/* All tasks reduce to the master their hit counts. */
 	MPI_Reduce(&hits, &all_hits, 1, MPI_INT, MPI_SUM, MASTER, MPI_COMM_WORLD);

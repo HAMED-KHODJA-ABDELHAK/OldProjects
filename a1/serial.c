@@ -80,11 +80,9 @@ int main(int argc, char **argv) {
 	int rank, size, darts, hits = 0;
 	double start, pi;
 
-	/* Start timing before init. */
-	start = MPI_Wtime();
-
-	/* Standard init for MPI. */
+	/* Standard init for MPI, start timer after init. */
 	MPI_Init(&argc, &argv);
+	start = MPI_Wtime();
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	srand(time(NULL));
