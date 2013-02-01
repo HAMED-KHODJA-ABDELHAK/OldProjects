@@ -1,6 +1,6 @@
 /**
  * Master used to spawn other processes.
- * Use command: bsub -I -q COMP428 -n1 mpirun -spawn ./demo/master rnds workers
+ * Use command: bsub -I -q COMP428 -n1 mpirun -spawn ./demo/spawn_master rnds workers
  * Arguments to master:
  * rnds: Number of rounds across all workers.
  * workers: Number of workers to spawn.
@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
 	/* Call reduce, this master contributes 0. recv_buf has total once finished. */
 	MPI_Reduce(&hits, &all_hits, 1, MPI_INT, MPI_SUM, MPI_ROOT, everyone);
 	pi = (4.0 * all_hits / darts);
-	printf("The hit count was %d, the final value of PI is: %.40f.\n", hits, pi);
+	printf("The hit count was %d, the final value of PI is: %.40f.\n", all_hits, pi);
 	printf("The percent deviation from reference: %.10f%%\n", (pi - REAL_PI)/REAL_PI *100);
 	printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
 
