@@ -78,7 +78,7 @@ int throw_darts(unsigned long rnds) {
  */
 int main(int argc, char **argv) {
 	int rank, size, darts, hits = 0;
-	double start, pi;
+	double start, end, pi;
 
 	/* Start timing before init. */
 	start = MPI_Wtime();
@@ -97,10 +97,10 @@ int main(int argc, char **argv) {
 
 	/* Report final pi calculation, cleanup and report time taken. */
 	pi = (4.0 * hits / darts);
-    printf("The number count was %d, the final value of PI is: %.40f.\n", hits, pi);
-    printf("The percent deviation from reference: %.10f%%\n", (pi - REAL_PI)/REAL_PI *100);
+	printf("The hit count was %d, the final value of PI is: %.40f.\n", hits, pi);
+	printf("The percent deviation from reference: %.10f%%\n", (pi - REAL_PI)/REAL_PI *100);
+	printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f.\n", MPI_Wtime() - start);
 	MPI_Finalize();
-	printf("This program took %f seconds to complete.\n", MPI_Wtime() - start);
 
 	return 0;
 }

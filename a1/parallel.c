@@ -40,7 +40,7 @@
  * Simple function if improperly called.
  */
 void usage() {
-	printf("Usage: ./demo/serial darts\ndarts: The number of darts to throw.\n");
+	printf("Usage: ./demo/parallel darts\ndarts: The number of darts to throw.\n");
 	exit(1);
 }
 
@@ -102,10 +102,10 @@ int main (int argc, char *argv[])
 	/* Report final pi calculation, cleanup and report time taken. */
 	if (rank == MASTER) {
 		pi = (4.0 * hits / darts);
-		printf("The number count was %d, the final value of PI is: %.40f.\n", hits, pi);
+		printf("The hit count was %d, the final value of PI is: %.40f.\n", hits, pi);
 		printf("The percent deviation from reference: %.10f%%\n", (pi - REAL_PI)/REAL_PI *100);
+		printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f.\n", MPI_Wtime() - start);
 		MPI_Finalize();
-		printf("This program took %f seconds to complete.\n", MPI_Wtime() - start);
 	}
 
 	return 0;
