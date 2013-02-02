@@ -19,9 +19,9 @@
 #include "mpi.h"
 
 /****************************** Constants/Macros **************************************************/
-#define RADIUS 1.0
-#define REAL_PI 3.14159265358979
-#define MASTER 0
+#define RADIUS 	1.0
+#define REAL_PI 	3.14159265358979
+#define MASTER 	0
 
 /****************************** Type Definitions **************************************************/
 
@@ -50,21 +50,21 @@ void usage() {
  * If the distance from center is less than OR equal to radius, we say it is inside.
  */
 int in_circle(double x, double y, double r) {
-    double cent_x = 2*x - r, cent_y = 2*y - r;
+    double cent_x = (2*r*x) - r, cent_y = (2*r*y) - r;
     double dist = (cent_x * cent_x) + (cent_y * cent_y);
 
     return dist < r*r;
 }
 
 /*
- * Function goes through a number of rnds, each time randomly gets a pair of x,y coords that
+ * Function goes through a number of darts, each time randomly gets a pair of x,y coords that
  * are inside a 1x1 square. Checks if point is in circle, if so increments cnt.
  */
-int throw_darts(unsigned int rnds) {
+int throw_darts(unsigned int darts) {
 	double x, y;
 	int cnt = 0;
 
-    for (unsigned int i = 0; i < rnds; ++i) {
+    for (unsigned int i = 0; i < darts; ++i) {
         x = rand() / (float)RAND_MAX;
         y = rand() / (float)RAND_MAX;
 
@@ -79,8 +79,6 @@ int main (int argc, char *argv[])
 {
 	int rank, size, darts, darts_per_task, hits = 0, all_hits = 0;
 	double start, pi;
-
-
 
 	/* Standard init for MPI, start timer after init. */
 	MPI_Init(&argc, &argv);
@@ -107,6 +105,7 @@ int main (int argc, char *argv[])
 		printf("The percent deviation from reference: %.10f%%\n", (pi - REAL_PI)/REAL_PI *100);
 		printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
 	}
+
 	MPI_Finalize();
 
 	return 0;

@@ -18,8 +18,8 @@
 #include "mpi.h"
 
 /****************************** Constants/Macros **************************************************/
-#define RADIUS 1.0
-#define REAL_PI 3.14159265358979
+#define RADIUS 	1.0
+#define REAL_PI 	3.14159265358979
 
 /****************************** Type Definitions **************************************************/
 
@@ -55,14 +55,14 @@ int in_circle(double x, double y, double r) {
 }
 
 /*
- * Function goes through a number of rnds, each time randomly gets a pair of x,y coords that
+ * Function goes through darts rounds, each time randomly gets a pair of x,y coords that
  * are inside a 1x1 square. Checks if point is in circle, if so increments cnt.
  */
-int throw_darts(unsigned int rnds) {
+int throw_darts(unsigned int darts) {
 	double x, y;
 	int cnt = 0;
 
-    for (unsigned int i = 0; i < rnds; ++i) {
+    for (unsigned int i = 0; i < darts; ++i) {
         x = rand() / (float)RAND_MAX;
         y = rand() / (float)RAND_MAX;
 
@@ -73,9 +73,6 @@ int throw_darts(unsigned int rnds) {
 	return cnt;
 }
 
-/**
- * Main programming body, executes the dart throwing and reports to user the time taken.
- */
 int main(int argc, char **argv) {
 	int rank, size, darts, hits = 0;
 	double start, pi;

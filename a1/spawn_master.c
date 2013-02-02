@@ -1,5 +1,6 @@
 /**
  * Master used to spawn other processes.
+ *
  * Use command: bsub -I -q COMP428 -n1 mpirun -spawn ./demo/spawn_master rnds workers
  * Arguments to master:
  * darts: Number of rounds across all workers.
@@ -14,9 +15,9 @@
 #include "mpi.h"
 
 /****************************** Constants/Macros **************************************************/
-#define SLAVE 		"./demo/spawn_slave"
+#define SLAVE 			"./demo/spawn_slave"
 #define ARG_LEN 	20
-#define REAL_PI 3.14159265358979
+#define REAL_PI 		3.14159265358979
 
 /****************************** Type Definitions **************************************************/
 
@@ -74,4 +75,3 @@ int main(int argc, char **argv) {
 
 	return 0;
 }
-

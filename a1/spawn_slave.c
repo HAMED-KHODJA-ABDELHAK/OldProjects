@@ -15,7 +15,7 @@
 #include "mpi.h"
 
 /****************************** Constants/Macros **************************************************/
-#define RADIUS 0.5
+#define RADIUS 	0.5
 
 /****************************** Type Definitions **************************************************/
 
@@ -30,14 +30,6 @@
 
 
 /****************************** Global Functions **************************************************/
-/*
- * Simple wrapper function, prints a message with a prefix then exits.
- */
-void error(char *str) {
-	printf("Error: %s.\n", str);
-	exit(1);
-}
-
 /*
  * Determines if a point is inside a circle of radius 1 centered on origin.
  * Centers the coords passed in, assuming they are not centered.
@@ -78,21 +70,20 @@ int main(int argc, char **argv) {
 
 	/* Init process and get some important info. */
 	MPI_Init(&argc, &argv);
-	MPI_Comm_get_parent(&parent);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	MPI_Comm_get_parent(&parent);
 
 	/* Seed the rand function, get the passed number of rounds. */
 	srand(time(NULL) + rank);
 	darts = atoi(*++argv);
 
 	hits = throw_darts(darts);
-//	printf("I am a worker number %d of %d, %d darts hit.\n", rank, size, send_buf);
 
+	/* Reduce data back to master. */
 	MPI_Reduce(&hits, &all_hits, 1, MPI_INT, MPI_SUM, 0, parent);
 
 	MPI_Finalize();
 
 	return 0;
 }
-
