@@ -85,7 +85,7 @@ int main (int argc, char *argv[])
 	else
 		darts = atoi(*++argv);
 	darts_per_task = darts/size;
-	printf("%d tasks will now throw %d darts each and then reduce to master.\n", size, darts_per_task);
+	printf("%d of %d will now throw %d darts.\n", rank, size, darts_per_task);
 	hits = throw_darts(darts_per_task);
 
 	/* All tasks reduce to the master their hit counts. */

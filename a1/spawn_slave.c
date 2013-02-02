@@ -31,26 +31,26 @@
 
 /****************************** Global Functions **************************************************/
 /*
- * Determines if a point is inside a circle of radius 1 centered on origin.
- * Centers the coords passed in, assuming they are not centered.
- * If the distance from center is less than OR equal, we say it is inside.
+ * Determines if a point is inside a circle of radius centered on origin.
+ * X and Y are assumed to come in as numbers between 0 and 1 from rand.
+ * If the distance from center is less than OR equal to radius, we say it is inside.
  */
 int in_circle(double x, double y, double r) {
-    double cent_x = x-r, cent_y = y-r;
+    double cent_x = (2*r*x) - r, cent_y = (2*r*y) - r;
     double dist = (cent_x * cent_x) + (cent_y * cent_y);
 
-    return dist <= r*r;
+    return dist < r*r;
 }
 
 /*
- * Function goes through a number of rnds, each time randomly gets a pair of x,y coords that
+ * Function goes through a number of darts, each time randomly gets a pair of x,y coords that
  * are inside a 1x1 square. Checks if point is in circle, if so increments cnt.
  */
-int throw_darts(unsigned int rnds) {
+int throw_darts(unsigned int darts) {
 	double x, y;
 	int cnt = 0;
 
-    for (unsigned int i = 0; i < rnds; ++i) {
+    for (unsigned int i = 0; i < darts; ++i) {
         x = rand() / (float)RAND_MAX;
         y = rand() / (float)RAND_MAX;
 
@@ -78,6 +78,7 @@ int main(int argc, char **argv) {
 	srand(time(NULL) + rank*rank*rank);
 	darts = atoi(*++argv);
 
+	printf("%d of %d will now throw %d darts.\n", rank, size, darts);
 	hits = throw_darts(darts);
 
 	/* Reduce data back to master. */

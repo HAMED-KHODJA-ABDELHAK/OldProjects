@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
 	snprintf(darts_str, ARG_LEN, "%d", (int) darts/tasks);
 	darts_str[ARG_LEN-1] = '\0';
 	char *w_args[] = {darts_str, NULL};
-	printf("Spawning %d slaves to throw %s darts.\n", tasks, darts_str);
+	printf("Spawning %d slaves to throw %s darts each.\n", tasks, darts_str);
 
 	/* Spawn workers then gather with reduce. */
 	start_spawn = MPI_Wtime();
