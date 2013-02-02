@@ -53,6 +53,10 @@ int main(int argc, char **argv) {
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 
 	/* Process args. */
+	if (argc < 2) {
+		printf("You MUST tell the master how many slaves to spawn. Try again.\n");
+		exit(1);
+	}
 	tasks = atoi(*++argv);
 	if (argc < 3)
 		darts = DEF_DARTS;
@@ -76,7 +80,7 @@ int main(int argc, char **argv) {
 	/* Call reduce, this master contributes 0. recv_buf has total once finished. */
 	MPI_Reduce(&hits, &all_hits, 1, MPI_INT, MPI_SUM, MPI_ROOT, everyone);
 	pi = (4.0 * all_hits / darts);
-	printf("The hit count was %d/%d, the final value of PI is: %.40f.\n", hits, darts, pi);
+	printf("The hit count was %d/%d, the final value of PI is: %.40f.\n", all_hits, darts, pi);
 	printf("The percent deviation from reference: %.10f%%\n", ((pi - REAL_PI)/REAL_PI) * 100);
 	printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start_init);
 
