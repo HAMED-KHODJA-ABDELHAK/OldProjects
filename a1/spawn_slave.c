@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
 	MPI_Comm_get_parent(&parent);
 
 	/* Seed the rand function, get the passed number of rounds. */
-	srand(time(NULL) + rank);
+	srand(time(NULL) + rank*rank*rank);
 	darts = atoi(*++argv);
 
 	hits = throw_darts(darts);
