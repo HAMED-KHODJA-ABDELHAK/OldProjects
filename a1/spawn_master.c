@@ -19,10 +19,10 @@
 #include "mpi.h"
 
 /****************************** Constants/Macros **************************************************/
+#define DEF_DARTS		5000000
 #define SLAVE 			"./demo/spawn_slave"
 #define ARG_LEN 		20
 #define REAL_PI 		3.14159265358979
-#define DEF_DARTS		5000000
 
 /****************************** Type Definitions **************************************************/
 

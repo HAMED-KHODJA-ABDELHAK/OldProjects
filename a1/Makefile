@@ -1,7 +1,9 @@
-# Make file for main project.
+# Make file for COMP428 assignment 1.
+
+# Declaration to make these phoney targets, means not dependent on files.
 .PHONY: all clean
 
-# Dirs for src and build artifacts.
+# Dirs for src and build artifacts. There must be a demo directory to build exes.
 SRC_DIR=.
 EXE_DIR=./demo
 

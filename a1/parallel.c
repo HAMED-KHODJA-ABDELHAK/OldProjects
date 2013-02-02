@@ -23,10 +23,10 @@
 #include "mpi.h"
 
 /****************************** Constants/Macros **************************************************/
-#define RADIUS 		1.0
-#define REAL_PI 	3.14159265358979
-#define MASTER 		0
 #define DEF_DARTS	5000000
+#define RADIUS		1.0
+#define REAL_PI 	3.14159265358979
+#define MASTER		0
 
 /****************************** Type Definitions **************************************************/
 
