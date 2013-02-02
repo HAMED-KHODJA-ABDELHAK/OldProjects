@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 	MPI_Comm everyone;
 	int rank, size, tasks, darts, hits = 0, all_hits = 0;
 	char darts_str[ARG_LEN];
-	double start_init, start_spawn, pi;
+	double start_init, start_spawn, end_spawn, pi;
 
 	/* Standard startup. */
 	MPI_Init(&argc, &argv);
@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
 	MPI_Comm_spawn(SLAVE, w_args, tasks,
 			MPI_INFO_NULL, 0, MPI_COMM_SELF, &everyone,
 			MPI_ERRCODES_IGNORE);
-	printf("Time just for comm spawn is %.10f seconds.\n", MPI_Wtime() - start_spawn);
+	end_spawn = MPI_Wtime();
 
 	/* Call reduce, this master contributes 0. recv_buf has total once finished. */
 	MPI_Reduce(&hits, &all_hits, 1, MPI_INT, MPI_SUM, MPI_ROOT, everyone);
@@ -83,6 +83,7 @@ int main(int argc, char **argv) {
 	printf("The hit count was %d/%d, the final value of PI is: %.40f.\n", all_hits, darts, pi);
 	printf("The percent deviation from reference: %.10f%%\n", ((pi - REAL_PI)/REAL_PI) * 100);
 	printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start_init);
+	printf("Time just for comm spawn is %.10f seconds.\n", end_spawn - start_spawn);
 
 	MPI_Finalize();
 
