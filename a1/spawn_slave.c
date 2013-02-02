@@ -1,17 +1,17 @@
 /**
- * This is the worker process.
+ * This is the slave process.
  * --- It has functions to throw darts for n rounds.
- * --- It takes one argument, rnds that says the number of rounds this process should go.
- * --- Result is returned with a reduce call.	 
+ * --- It takes one argument, darts that says the number of rounds this process should go.
+ * --- Result is returned with a reduce call.
  */
 /****************************** Header Files ******************************************************/
 /* C Headers */
 #include <stdio.h>
-#include <stdlib.h> 
-#include <string.h> 
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
-/* Project Headers */ 
+/* Project Headers */
 #include "mpi.h"
 
 /****************************** Constants/Macros **************************************************/
@@ -52,19 +52,19 @@ int in_circle(double x, double y, double r) {
 
 /*
  * Function goes through a number of rnds, each time randomly gets a pair of x,y coords that
- * are inside a 1x1 square. Checks if point is in circle, if so increments cnt. 
+ * are inside a 1x1 square. Checks if point is in circle, if so increments cnt.
  */
-int throw_darts(unsigned long rnds) {
+int throw_darts(unsigned int rnds) {
 	double x, y;
 	int cnt = 0;
 
-    for (unsigned long i = 0; i < rnds; ++i) {
+    for (unsigned int i = 0; i < rnds; ++i) {
         x = rand() / (float)RAND_MAX;
         y = rand() / (float)RAND_MAX;
 
         if (in_circle(x, y, RADIUS))
             cnt++;
-    }   
+    }
 
 	return cnt;
 }
@@ -73,7 +73,7 @@ int throw_darts(unsigned long rnds) {
  * Main loop of the worker threads.
  */
 int main(int argc, char **argv) {
-	int rank, size, rounds, send_buf = 0, recv_buf = 0;
+	int rank, size, darts, hits = 0, all_hits = 0;
 	MPI_Comm parent;
 
 	/* Init process and get some important info. */
@@ -84,15 +84,15 @@ int main(int argc, char **argv) {
 
 	/* Seed the rand function, get the passed number of rounds. */
 	srand(time(NULL) + rank);
-	rounds = atoi(*++argv);
+	darts = atoi(*++argv);
 
-	send_buf = throw_darts(rounds);
+	hits = throw_darts(darts);
 //	printf("I am a worker number %d of %d, %d darts hit.\n", rank, size, send_buf);
-	
-	MPI_Reduce(&send_buf, &recv_buf, 1, MPI_INT, MPI_SUM, 0, parent);
+
+	MPI_Reduce(&hits, &all_hits, 1, MPI_INT, MPI_SUM, 0, parent);
 
 	MPI_Finalize();
-	
+
 	return 0;
 }
 

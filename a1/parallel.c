@@ -20,7 +20,7 @@
 
 /****************************** Constants/Macros **************************************************/
 #define RADIUS 1.0
-#define REAL_PI 3.141592653589793238462643383279502884197169399375105820974944592307816406286
+#define REAL_PI 3.14159265358979
 #define MASTER 0
 
 /****************************** Type Definitions **************************************************/
@@ -60,11 +60,11 @@ int in_circle(double x, double y, double r) {
  * Function goes through a number of rnds, each time randomly gets a pair of x,y coords that
  * are inside a 1x1 square. Checks if point is in circle, if so increments cnt.
  */
-int throw_darts(unsigned long rnds) {
+int throw_darts(unsigned int rnds) {
 	double x, y;
 	int cnt = 0;
 
-    for (unsigned long i = 0; i < rnds; ++i) {
+    for (unsigned int i = 0; i < rnds; ++i) {
         x = rand() / (float)RAND_MAX;
         y = rand() / (float)RAND_MAX;
 

@@ -2,7 +2,7 @@
  * Master used to spawn other processes.
  * Use command: bsub -I -q COMP428 -n1 mpirun -spawn ./demo/spawn_master rnds workers
  * Arguments to master:
- * rnds: Number of rounds across all workers.
+ * darts: Number of rounds across all workers.
  * workers: Number of workers to spawn.
  */
 /****************************** Header Files ******************************************************/
@@ -15,8 +15,8 @@
 
 /****************************** Constants/Macros **************************************************/
 #define SLAVE 		"./demo/spawn_slave"
-#define RNDS_LEN 	20
-#define REAL_PI 3.141592653589793238462643383279502884197169399375105820974944592307816406286
+#define ARG_LEN 	20
+#define REAL_PI 3.14159265358979
 
 /****************************** Type Definitions **************************************************/
 
@@ -37,7 +37,7 @@
 int main(int argc, char **argv) {
 	MPI_Comm everyone;
 	int rank, size, tasks, darts, hits = 0, all_hits = 0;
-	char str_rounds[RNDS_LEN];
+	char darts_str[ARG_LEN];
 	double start_init, start_spawn, pi;
 
 	/* Standard startup. */
@@ -50,13 +50,13 @@ int main(int argc, char **argv) {
 	darts = atoi(*++argv);
 	tasks = atoi(*++argv);
 
-	/* Each process gets RNDS/n work. Calculate and put in string to pass. */
-	snprintf(str_rounds, RNDS_LEN, "%d", (int) darts/tasks);
-	str_rounds[RNDS_LEN-1] = '\0';
-	char *w_args[] = {str_rounds, NULL};
-	printf("Spawning %d slaves to throw %s.\n", tasks, str_rounds);
+	/* Each process gets darts/n work. Calculate and put in string to pass. Numbers > ARG_LEN truncated. */
+	snprintf(darts_str, ARG_LEN, "%d", (int) darts/tasks);
+	darts_str[ARG_LEN-1] = '\0';
+	char *w_args[] = {darts_str, NULL};
+	printf("Spawning %d slaves to throw %s darts.\n", tasks, darts_str);
 
-	/* Spawn workers then block with reduce. */
+	/* Spawn workers then gather with reduce. */
 	start_spawn = MPI_Wtime();
 	MPI_Comm_spawn(SLAVE, w_args, tasks,
 			MPI_INFO_NULL, 0, MPI_COMM_SELF, &everyone,
