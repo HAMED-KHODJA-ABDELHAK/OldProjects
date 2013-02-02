@@ -1,13 +1,17 @@
 /**
  * Parallel implementation of pi calculation, used as baseline.
- * Will throw darts/num_workers and then calculate PI.
+ * Will throw darts/num_workers and then calculate PI. If no darts argument, defaults to same as
+ * the total darts for all rounds in the llnl parallel example.
  * Reports the time taken and deviation from reference PI, reference is first line of
  * 		(http://www.geom.uiuc.edu/~huberty/math5337/groupe/digits.html).
  *
  * Use command: bsub -I -q COMP428 -n <n> mpirun -srun ./demo/serial <darts>
- * Arguments to serial:
+ *
+ * Arguments to bsub:
  * n: Number of other tasks to start at same time.
- * darts: Number of darts to throw, basically the work load.
+ *
+ * Arguments to serial:
+ * darts: Number of rounds across all workers. If not provided, uses DEF_DARTS.
  */
 /****************************** Header Files ******************************************************/
 /* C Headers */
@@ -23,6 +27,7 @@
 #define REAL_PI 	3.14159265358979
 #define MASTER 		0
 #define DEF_DARTS	5000000
+
 /****************************** Type Definitions **************************************************/
 
 
@@ -94,8 +99,8 @@ int main (int argc, char *argv[])
 	/* Report final pi calculation, cleanup and report time taken. */
 	if (rank == MASTER) {
 		pi = (4.0 * all_hits / darts);
-		printf("The hit count was %d, the final value of PI is: %.40f.\n", hits, pi);
-		printf("The percent deviation from reference: %.10f%%\n", (pi - REAL_PI)/REAL_PI *100);
+		printf("The hit count was %d/%d, the final value of PI is: %.40f.\n", hits, darts, pi);
+		printf("The percent deviation from reference: %.10f%%\n", ((pi - REAL_PI)/REAL_PI) * 100);
 		printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
 	}
 
