@@ -18,7 +18,7 @@
 #define SLAVE 			"./demo/spawn_slave"
 #define ARG_LEN 	20
 #define REAL_PI 		3.14159265358979
-
+#define DEF_DARTS		5000000
 /****************************** Type Definitions **************************************************/
 
 
@@ -48,7 +48,10 @@ int main(int argc, char **argv) {
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 
 	/* Process args. */
-	darts = atoi(*++argv);
+	if (argc < 3)
+		darts = DEF_DARTS;
+	else
+		darts = atoi(*++argv);
 	tasks = atoi(*++argv);
 
 	/* Each process gets darts/n work. Calculate and put in string to pass. Numbers > ARG_LEN truncated. */

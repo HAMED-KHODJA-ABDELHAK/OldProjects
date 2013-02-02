@@ -10,7 +10,7 @@ CC:=mpicc
 RM:=@rm -rf
 CFLAGS:=-std=c99
 F_DEBUG:=-ggdb -Wall -Werror -Wextra -Winline -pedantic
-LIBS:=-lm
+LIBS:=
 
 # Generic files to clean.
 FILES_TO_CLEAN:=*.o *.a *.out *.exe *~ temp.* *.gcov *.gcda *.gcno

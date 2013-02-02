@@ -18,9 +18,9 @@
 #include "mpi.h"
 
 /****************************** Constants/Macros **************************************************/
-#define RADIUS 	1.0
+#define RADIUS		1.0
 #define REAL_PI 	3.14159265358979
-
+#define DEF_DARTS 	5000000
 /****************************** Type Definitions **************************************************/
 
 
@@ -34,14 +34,6 @@
 
 
 /****************************** Global Functions **************************************************/
-/*
- * Simple function if improperly called.
- */
-void usage() {
-	printf("Usage: ./demo/serial darts\ndarts: The number of darts to throw.\n");
-	exit(1);
-}
-
 /*
  * Determines if a point is inside a circle of radius centred on origin.
  * X and Y are assumed to come in as numbers between 0 and 1 from rand.
@@ -86,8 +78,9 @@ int main(int argc, char **argv) {
 
 	/* Get workload from command argument and execute. */
 	if (argc < 2)
-		usage();
-	darts = atoi(*++argv);
+		darts = DEF_DARTS;
+	else
+		darts = atoi(*++argv);
 	hits = throw_darts(darts);
 
 	/* Report final pi calculation, cleanup and report time taken. */

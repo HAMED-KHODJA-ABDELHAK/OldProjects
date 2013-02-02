@@ -19,10 +19,10 @@
 #include "mpi.h"
 
 /****************************** Constants/Macros **************************************************/
-#define RADIUS 	1.0
+#define RADIUS 		1.0
 #define REAL_PI 	3.14159265358979
-#define MASTER 	0
-
+#define MASTER 		0
+#define DEF_DARTS	5000000
 /****************************** Type Definitions **************************************************/
 
 
@@ -36,14 +36,6 @@
 
 
 /****************************** Global Functions **************************************************/
-/*
- * Simple function if improperly called.
- */
-void usage() {
-	printf("Usage: ./demo/parallel darts\ndarts: The number of darts to throw.\n");
-	exit(1);
-}
-
 /*
  * Determines if a point is inside a circle of radius centered on origin.
  * X and Y are assumed to come in as numbers between 0 and 1 from rand.
@@ -89,8 +81,9 @@ int main (int argc, char *argv[])
 
 	/* Get workload from command argument and execute. */
 	if (argc < 2)
-		usage();
-	darts = atoi(*++argv);
+		darts = DEF_DARTS;
+	else
+		darts = atoi(*++argv);
 	darts_per_task = darts/size;
 	printf("%d tasks will now throw %d darts each and then reduce to master.\n", size, darts_per_task);
 	hits = throw_darts(darts_per_task);
