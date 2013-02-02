@@ -21,6 +21,7 @@
 #define DARTS 50000     /* number of throws at dartboard */
 #define ROUNDS 100      /* number of times "darts" is iterated */
 #define MASTER 0        /* task ID of master task */
+#define REAL_PI 	3.14159265358979
 
 #define sqr(x)	((x)*(x))
 
@@ -107,6 +108,8 @@ int main (int argc, char *argv[])
 			avepi = ((avepi * i) + pi)/(i + 1);
 			printf("   After %8d throws, average value of pi = %10.8f\n",
 					(DARTS * (i + 1)),avepi);
+			printf("The percent deviation from reference of pi: %.10f%%\n", ((pi - REAL_PI)/REAL_PI) * 100);
+			printf("The percent deviation from reference of avepi: %.10f%%\n", ((avepi - REAL_PI)/REAL_PI) * 100);
 		}
 	}
 	if (taskid == MASTER) {

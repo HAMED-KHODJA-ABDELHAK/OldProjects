@@ -21,6 +21,7 @@ EXES = \
 	${EXE_DIR}/parallel \
 	${EXE_DIR}/spawn_master \
 	${EXE_DIR}/spawn_slave \
+	${EXE_DIR}/llnlParallel \
 
 # Custome rules, define how to link and compile respectively.
 ${EXE_DIR}/%: %.o 
