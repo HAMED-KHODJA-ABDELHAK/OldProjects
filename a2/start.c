@@ -23,6 +23,7 @@
 #define INPUT "input.txt"
 #define OUTPUT "output.txt"
 #define MAX_VAL 1000
+#define N 16
 
 /****************************** Type Definitions **************************************************/
 
@@ -50,7 +51,7 @@ void m_error(const char * const mesg) {
  */
 void gen_input(int vals[], int size) {
 	for (int i = 0; i < size; ++i)
-		vals[i] = rand % MAX_VAL;
+		vals[i] = rand() % MAX_VAL;
 }
 
 /*
@@ -59,23 +60,26 @@ void gen_input(int vals[], int size) {
  * Important note: vals will be allocated on heap, clear later with free.
  */
 int read_file(const char *file, int *vals) {
-	int size = 0, i;
+	int size = 0, i, i2;
 	FILE *f;
 
-	if ((f = fopen(file, 'r')) == NULL)
+	if ((f = fopen(file, "r")) == NULL)
 		m_error("READ: Failed to open file.");
 
 	/* Keep scanning the file for ints and incrementing size. */
-	while ((fscanf(f, "%d ", i)) != 0)
+	while (!feof(f) && !ferror(f)) {
+		fscanf(f, "%d %d", &i, &i2); 
 		++size;
+	}
 
+	printf("READ: val %d.\n", i);
 	/* Go back to beginning of file, allocate an array of ints size big. */
 	rewind(f);
 	vals = calloc(size, sizeof(int));
 
 	/* Now put them in the final array. */
 	for (i = 0; i < size; ++i)
-		fscanf(f, "%d ", vals[i]);
+		fscanf(f, "%d ", vals+i);
 
 	if (fclose(f) != 0)
 		m_error("READ: Failed to close properly.");
@@ -90,7 +94,7 @@ int read_file(const char *file, int *vals) {
 void write_file(const char *file, const int *vals, const int size) {
 	FILE *f;
 
-	if ((f = fopen(file, 'w')) == NULL)
+	if ((f = fopen(file, "w")) == NULL)
 		m_error("WRITE: Failed to open file.");
 
 	for (int i = 0; i < size; ++i)
@@ -102,8 +106,8 @@ void write_file(const char *file, const int *vals, const int size) {
 }
 
 int main(int argc, char **argv) {
-	int rank, size, darts, hits = 0;
-	double start, pi;
+	int rank, size; 
+	double start;
 
 	/* Standard init for MPI, start timer after init. */
 	MPI_Init(&argc, &argv);
@@ -113,9 +117,18 @@ int main(int argc, char **argv) {
 	srand(time(NULL));
 
 	/* Test code. */
-	int ar[64];
-	gen_input(ar, 64);
-	write_file(OUTPUT, ar, 64);
+/*
+	int ar[N];
+	gen_input(ar, N);
+	write_file(input, ar, N);
+*/
+	int *ar = NULL, ar_size;
+	ar_size = read_file(INPUT, ar);
+
+	printf("The size is: %d.\n", size);
+
+	if (ar != NULL) 
+		free(ar);
 
 	printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
 	MPI_Finalize();
