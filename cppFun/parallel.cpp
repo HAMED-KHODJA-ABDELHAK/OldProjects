@@ -127,8 +127,6 @@ int main(int argc, char **argv) {
 
 	hits = throw_darts(darts_per_task);
 
-//	MPI::Intracomm::Reduce(hits, all_hits, 1,
-//		MPI::Datatype::MPI_INT,
 	MPI::COMM_WORLD.Reduce(&hits, &all_hits, 1, MPI::INT, MPI::SUM, 0);
 
 	if (rank == MASTER) {
