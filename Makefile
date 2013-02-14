@@ -7,11 +7,13 @@ include Make.defines
 all: libs
 	${MAKE} -C ./fun
 	${MAKE} -C ./a1
+	${MAKE} -C ./a2
 
 clean:
 	rm -rf ${CLEANFILES}
 	${MAKE} -C ./fun clean
 	${MAKE} -C ./a1 clean
+	${MAKE} -C ./a2 clean
 
 # ------------------------ Reference Notes -----------------------------------
 # Template for all src Makefiles. Use .cc for c++, .c for c.
