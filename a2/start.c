@@ -1,8 +1,9 @@
 /**
  * Reference implementation of quicksort with serial implementation as baseline.
  * This program will only serially calculate the quicksort of the input file.
+ * If you don't know the number of words in your input: cat input.txt | wc, second number is word count.
  *
- * Use command: bsub -I -q COMP428 -n1 mpirun -srun ./demo/serial <work> <generate>
+ * Use command: bsub -I -q COMP428 -n1 mpirun -srun ./demo/serial <work> <mode>
  *
  * Arguments to serial:
  * work: The amount of numbers to quicksort.
@@ -139,6 +140,8 @@ int main(int argc, char **argv) {
 		write_file(OUTPUT, vals, num_vals);
 
 		free(vals);
+	} else {
+
 	}
 
 	printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
