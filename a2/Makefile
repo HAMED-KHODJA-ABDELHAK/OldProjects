@@ -22,6 +22,7 @@ FILES_TO_CLEAN:=*.o *.a *.out *.exe *~ temp.* *.gcov *.gcda *.gcno
 # Target executables to build
 EXES = \
 	${EXE_DIR}/start \
+	${EXE_DIR}/test \
 
 # Custome rules, define how to link and compile respectively.
 ${EXE_DIR}/%: %.o 
@@ -34,4 +35,4 @@ ${EXE_DIR}/%: %.o
 all: ${EXES}
 
 clean:
-	$(RM) $(EXES) $(FILES_TO_CLEAN)          
+	$(RM) $(EXES) input.txt output.txt $(FILES_TO_CLEAN)          

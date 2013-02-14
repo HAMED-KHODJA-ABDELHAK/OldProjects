@@ -1,20 +1,19 @@
 /**
- * Serial implementation of pi calculation, used as baseline.
- * Will serially throw the number of darts passed as argument. If no darts argument, defaults to same as
- * the total darts for all rounds in the llnl parallel example.
- * Reports the time taken and deviation from reference PI, reference is first line of
- * 		(http://www.geom.uiuc.edu/~huberty/math5337/groupe/digits.html).
+ * Reference implementation of quicksort with serial implementation as baseline.
+ * This program will only serially calculate the quicksort of the input file.
  *
- * Use command: bsub -I -q COMP428 -n1 mpirun -srun ./demo/serial <darts>
+ * Use command: bsub -I -q COMP428 -n1 mpirun -srun ./demo/serial <work> <generate>
  *
  * Arguments to serial:
- * darts: Number of rounds across all workers. If not provided, uses DEF_DARTS.
+ * work: The amount of numbers to quicksort.
+ * gen: Flag that optionally makes master generate a new input.
  */
 /****************************** Header Files ******************************************************/
 /* C Headers */
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <limits.h>
 
 /* Project Headers */
 #include "mpi.h"
@@ -22,8 +21,8 @@
 /****************************** Constants/Macros **************************************************/
 #define INPUT "input.txt"
 #define OUTPUT "output.txt"
-#define MAX_VAL 1000
-#define N 16
+#define ROOT 0
+#define MAX_VAL 1000000
 
 /****************************** Type Definitions **************************************************/
 
@@ -47,6 +46,15 @@ void m_error(const char * const mesg) {
 }
 
 /*
+ * Standard increasing comparator for qsort.
+ */
+int compare (const void *a, const void *b)
+{
+	int val_a = *((int *)a), val_b = *((int *)b);
+	return val_a - val_b;
+}
+
+/*
  * Function is used only to generate the random values.
  */
 void gen_input(int vals[], int size) {
@@ -59,32 +67,19 @@ void gen_input(int vals[], int size) {
  * Returns the number of values read into the array.
  * Important note: vals will be allocated on heap, clear later with free.
  */
-int read_file(const char *file, int *vals) {
-	int size = 0, i, i2;
+void read_file(const char *file, int **vals, const int size) {
+	// Note on size, I start it at -1 to compensate for the below while loop going one extra time.
+	int i;
 	FILE *f;
 
 	if ((f = fopen(file, "r")) == NULL)
 		m_error("READ: Failed to open file.");
 
-	/* Keep scanning the file for ints and incrementing size. */
-	while (!feof(f) && !ferror(f)) {
-		fscanf(f, "%d %d", &i, &i2); 
-		++size;
-	}
-
-	printf("READ: val %d.\n", i);
-	/* Go back to beginning of file, allocate an array of ints size big. */
-	rewind(f);
-	vals = calloc(size, sizeof(int));
-
-	/* Now put them in the final array. */
 	for (i = 0; i < size; ++i)
-		fscanf(f, "%d ", vals+i);
+		fscanf(f, "%d ", (*vals)+i);
 
 	if (fclose(f) != 0)
 		m_error("READ: Failed to close properly.");
-
-	return size;
 }
 
 /*
@@ -98,15 +93,14 @@ void write_file(const char *file, const int *vals, const int size) {
 		m_error("WRITE: Failed to open file.");
 
 	for (int i = 0; i < size; ++i)
-		fprintf(f, "%d ", vals[i]);
-	fprintf(f, "\n");
+		fprintf(f, "%d\n ", vals[i]);
 
 	if (fclose(f) != 0)
 		m_error("WRITE: Failed to close properly.");
 }
 
 int main(int argc, char **argv) {
-	int rank, size; 
+	int rank, size, *vals = NULL, num_vals;
 	double start;
 
 	/* Standard init for MPI, start timer after init. */
@@ -116,19 +110,36 @@ int main(int argc, char **argv) {
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	srand(time(NULL));
 
-	/* Test code. */
-/*
-	int ar[N];
-	gen_input(ar, N);
-	write_file(input, ar, N);
-*/
-	int *ar = NULL, ar_size;
-	ar_size = read_file(INPUT, ar);
+	if (rank == ROOT) {
+		if (argc < 2) {
+			printf("See usage at the top of the c file.\n");
+			exit(1);
+		}
 
-	printf("The size is: %d.\n", size);
+		/* Get the work amount from command. */
+		num_vals = atoi(*++argv);
+		printf("Work is %d now.\n", num_vals);
 
-	if (ar != NULL) 
-		free(ar);
+		/* Allocate it on the heap, large amount of memory likely wouldn't fit on stack. */
+		vals = (int *)malloc(num_vals * sizeof(int));
+		if (vals == NULL)
+			m_error("READ: Can't allocate vals array on heap.");
+
+		if (argc > 2) {
+			/* Write random input each time of N size */
+			gen_input(vals, num_vals);
+			write_file(INPUT, vals, num_vals);
+		}
+
+		/* Read back input from file into array on heap. */
+		read_file(INPUT, &vals, num_vals);
+
+		/* Sort and output to file. */
+		qsort(vals, num_vals, sizeof(int), compare);
+		write_file(OUTPUT, vals, num_vals);
+
+		free(vals);
+	}
 
 	printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
 	MPI_Finalize();
