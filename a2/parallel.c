@@ -27,7 +27,7 @@
 #define OUTPUT "output.txt"
 #define ROOT 0
 #define MAX_VAL 1000000
-#define GEN "gen"
+#define GENERATE_FLAG "gen"
 
 /****************************** Type Definitions **************************************************/
 
@@ -132,8 +132,8 @@ int main(int argc, char **argv) {
 			m_error("MAIN: Can't allocate vals array on heap.");
 
 		/* If requested, generate new input file. */
-		if (strcmp(*++argv, GEN) == 0) {
-			gen_input(vals, num_total*size);
+		if (strcmp(*++argv, GENERATE_FLAG) == 0) {
+			gen_input(vals, num_total);
 			write_file(INPUT, vals, num_total);
 		}
 
