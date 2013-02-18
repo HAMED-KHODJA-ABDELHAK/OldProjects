@@ -6,7 +6,7 @@
  * Use command: bsub -I -q COMP428 -n1 mpirun -srun ./demo/serial <work> <mode>
  *
  * Arguments to serial:
- * work: The amount of numbers to quicksort. This should match number in input.txt if not generated.
+ * work: The amount of numbers per process, total = work * world size.
  * mode: Flag that optionally makes master generate a new input.
  * 		-> Use "gen" to generate new input.
  * 		-> Use "read" to use existing input.txt.
@@ -64,6 +64,8 @@ int compare (const void *a, const void *b)
  * array on the heap.
  */
 void gen_input(int vals[], int size) {
+	srand(time(NULL));
+
 	for (int i = 0; i < size; ++i)
 		vals[i] = rand() % MAX_VAL;
 }
@@ -106,22 +108,20 @@ void write_file(const char *file, const int *vals, const int size) {
 }
 
 int main(int argc, char **argv) {
-	int rank, size, *vals = NULL, num_vals, *recv_buf, vals_per_p;
+	int rank, size, *vals = NULL, num_vals, *recv_buf;
 	double start;
 
-	/* Standard init for MPI, start timer after init. */
+	/* Standard init for MPI, start timer after init. Get rank and size too. */
 	MPI_Init(&argc, &argv);
 	start = MPI_Wtime();
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
-	srand(time(NULL));
 
-	/* Get the work amount from command. */
+	/* Get the work amount from command for each process. */
 	num_vals = atoi(*++argv);
-	vals_per_p = num_vals / size;
 
 	/* Malloc a workspace for local stuff. */
-	recv_buf = malloc(vals_per_p * sizeof(int));
+	recv_buf = malloc(num_vals * sizeof(int));
 	if (recv_buf == NULL)
 		m_error("MAIN: Can't allocate wspace array on heap.");
 
@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
 
 		/* If requested, generate new input file. */
 		if (strcmp(*++argv, GEN) == 0) {
-			gen_input(vals, num_vals);
+			gen_input(vals, num_vals*size);
 			write_file(INPUT, vals, num_vals);
 		}
 
@@ -145,12 +145,13 @@ int main(int argc, char **argv) {
 	}
 
 	/* Scatter, all processes same until result at master. */
-	MPI_Scatter(vals, vals_per_p, MPI_INT, recv_buf, vals_per_p, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Scatter(vals, num_vals, MPI_INT, recv_buf, num_vals, MPI_INT, 0, MPI_COMM_WORLD);
 	printf("My first digit is: %d.\n", *recv_buf);
 	char buf[60];
 	sprintf(buf, "%s-%d", OUTPUT, rank);
-	write_file(buf, recv_buf, vals_per_p);
+	write_file(buf, recv_buf, num_vals);
 
+	/* Last step, root has result write to output the sorted array. */
 	if (rank == ROOT) {
 		write_file(OUTPUT, vals, num_vals);
 
