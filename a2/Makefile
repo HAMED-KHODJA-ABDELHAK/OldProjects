@@ -14,26 +14,37 @@ CC:=mpicc
 RM:=@rm -rf
 CFLAGS:=-std=c99
 F_DEBUG:=-ggdb -Wall -Werror -Wextra -Winline -pedantic
-LIBS:=
+
+# Library stuff, reduce duplication.
+AR:=ar -rf
+RANLIB:=ranlib
+LIBS:=./mylib.a
+LIB_OBJS:=mylib.o
+LIB_NAME:=mylib.a
 
 # Generic files to clean.
 FILES_TO_CLEAN:=*.o *.a *.out *.exe *~ temp.* *.gcov *.gcda *.gcno
 
 # Target executables to build
 EXES = \
-	${EXE_DIR}/serial \
-	${EXE_DIR}/parallel \
-	${EXE_DIR}/test \
+	$(EXE_DIR)/serial \
+	$(EXE_DIR)/parallel \
+	$(EXE_DIR)/test \
 
 # Custome rules, define how to link and compile respectively.
-${EXE_DIR}/%: %.o 
-	${CC} ${LIBS} -o $@ $< 
+$(EXE_DIR)/%: %.o 
+	$(CC) -o $@ $< $(LIBS) 
 
-%.o: ${SRC_DIR}/%.c
-	${CC} $(CFLAGS) $(F_DEBUG) -o $@ -c $< 
+%.o: $(SRC_DIR)/%.c
+	$(CC) $(CFLAGS) $(F_DEBUG) -o $@ -c $< 
 
 # Rules to build and clean
-all: ${EXES}
+all: lib $(EXES)
+
+lib: $(LIB_OBJS)
+	$(AR) $(LIB_NAME) $(LIB_OBJS) 
+	$(RANLIB) $(LIB_NAME)
+	$(RM) $(LIB_OBJS)
 
 clean:
 	$(RM) $(EXES) input.txt* output.txt* $(FILES_TO_CLEAN)          
