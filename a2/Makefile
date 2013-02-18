@@ -21,9 +21,9 @@ FILES_TO_CLEAN:=*.o *.a *.out *.exe *~ temp.* *.gcov *.gcda *.gcno
 
 # Target executables to build
 EXES = \
-	${EXE_DIR}/start \
-	${EXE_DIR}/test \
 	${EXE_DIR}/serial \
+	${EXE_DIR}/parallel \
+	${EXE_DIR}/test \
 
 # Custome rules, define how to link and compile respectively.
 ${EXE_DIR}/%: %.o 
