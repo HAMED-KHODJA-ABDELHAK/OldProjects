@@ -148,10 +148,6 @@ int main(int argc, char **argv) {
 
 	/* Scatter, all processes same until result at master. */
 	MPI_Scatter(vals, num_proc, MPI_INT, recv_buf, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
-//	printf("My first digit is: %d.\n", *recv_buf);
-//	char buf[60];
-//	sprintf(buf, "%s-%d", OUTPUT, rank);
-//	write_file(buf, recv_buf, num_proc);
 	qsort(recv_buf, num_proc, sizeof(int), compare);
 	MPI_Gather(recv_buf, num_proc, MPI_INT, vals, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
 
