@@ -23,6 +23,7 @@ FILES_TO_CLEAN:=*.o *.a *.out *.exe *~ temp.* *.gcov *.gcda *.gcno
 EXES = \
 	${EXE_DIR}/start \
 	${EXE_DIR}/test \
+	${EXE_DIR}/serial \
 
 # Custome rules, define how to link and compile respectively.
 ${EXE_DIR}/%: %.o 
