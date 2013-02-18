@@ -39,6 +39,9 @@
 
 /****************************** Global Functions **************************************************/
 
+/*
+ * Main execution body.
+ */
 int main(int argc, char **argv) {
 	int rank, size, *vals = NULL, num_proc, num_total, *recv_buf;
 	double start;

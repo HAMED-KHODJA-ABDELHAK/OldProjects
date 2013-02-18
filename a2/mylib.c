@@ -39,8 +39,7 @@ void m_error(const char * const mesg) {
 /*
  * Standard increasing comparator for qsort.
  */
-int compare (const void *a, const void *b)
-{
+int compare (const void *a, const void *b) {
 	return *((int *)a) - *((int *)b);
 }
 
