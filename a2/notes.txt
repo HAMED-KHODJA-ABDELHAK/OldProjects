@@ -1,0 +1,9 @@
+We can recursively use the bit positions to pair.
+Those with lower bit in lower cube, those with higher bit in higher cube.
+Lower pairs send higher pivot portion to other partner. Same for higher.
+After log(n) recursions we will have the sorted list at each processor.
+Merge the lists to p0 and write to output.
+
+Use get_count in the case where we are exchanging data, so in the 
+case where we send and recv in a dimensional exchange.
+
