@@ -108,7 +108,7 @@ void write_file(const char *file, const int *vals, const int size) {
 }
 
 int main(int argc, char **argv) {
-	int rank, size, *vals = NULL, num_vals, *recv_buf;
+	int rank, size, *vals = NULL, num_proc, num_total, *recv_buf;
 	double start;
 
 	/* Standard init for MPI, start timer after init. Get rank and size too. */
@@ -118,42 +118,44 @@ int main(int argc, char **argv) {
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 
 	/* Get the work amount from command for each process. */
-	num_vals = atoi(*++argv);
+	num_proc = atoi(*++argv);
+	num_total = num_proc * size;
 
-	/* Malloc a workspace for local stuff. */
-	recv_buf = malloc(num_vals * sizeof(int));
-	if (recv_buf == NULL)
-		m_error("MAIN: Can't allocate wspace array on heap.");
-
+	/* Root only work, ensure good usage and proper input. */
 	if (rank == ROOT) {
 		if (argc < 3)
 			m_error("MAIN: Bad usage, see top of respective c file.");
 
 		/* Allocate the whole array on the heap, large amount of memory likely wouldn't fit on stack. */
-		vals = (int *)malloc(num_vals * sizeof(int));
+		vals = (int *)malloc(num_total * sizeof(int));
 		if (vals == NULL)
 			m_error("MAIN: Can't allocate vals array on heap.");
 
 		/* If requested, generate new input file. */
 		if (strcmp(*++argv, GEN) == 0) {
-			gen_input(vals, num_vals*size);
-			write_file(INPUT, vals, num_vals);
+			gen_input(vals, num_total*size);
+			write_file(INPUT, vals, num_total);
 		}
 
 		/* Read back input from file into array on heap. */
-		read_file(INPUT, &vals, num_vals);
+		read_file(INPUT, &vals, num_total);
 	}
 
+	/* Malloc a workspace for local stuff. */
+	recv_buf = malloc(num_proc * sizeof(int));
+	if (recv_buf == NULL)
+		m_error("MAIN: Can't allocate wspace array on heap.");
+
 	/* Scatter, all processes same until result at master. */
-	MPI_Scatter(vals, num_vals, MPI_INT, recv_buf, num_vals, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Scatter(vals, num_proc, MPI_INT, recv_buf, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
 	printf("My first digit is: %d.\n", *recv_buf);
 	char buf[60];
 	sprintf(buf, "%s-%d", OUTPUT, rank);
-	write_file(buf, recv_buf, num_vals);
+	write_file(buf, recv_buf, num_proc);
 
 	/* Last step, root has result write to output the sorted array. */
 	if (rank == ROOT) {
-		write_file(OUTPUT, vals, num_vals);
+		write_file(OUTPUT, vals, num_total);
 
 		free(vals);
 		printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
