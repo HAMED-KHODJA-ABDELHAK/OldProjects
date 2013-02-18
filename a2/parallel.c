@@ -106,7 +106,7 @@ void write_file(const char *file, const int *vals, const int size) {
 }
 
 int main(int argc, char **argv) {
-	int rank, size, *vals = NULL, num_vals;
+	int rank, size, *vals = NULL, num_vals, *recv_buf, vals_per_p;
 	double start;
 
 	/* Standard init for MPI, start timer after init. */
@@ -116,20 +116,23 @@ int main(int argc, char **argv) {
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	srand(time(NULL));
 
+	/* Get the work amount from command. */
+	num_vals = atoi(*++argv);
+	vals_per_p = num_vals / size;
+
+	/* Malloc a workspace for local stuff. */
+	recv_buf = malloc(vals_per_p * sizeof(int));
+	if (recv_buf == NULL)
+		m_error("MAIN: Can't allocate wspace array on heap.");
+
 	if (rank == ROOT) {
-		if (argc < 3) {
-			printf("See usage at the top of the c file.\n");
-			exit(1);
-		}
+		if (argc < 3)
+			m_error("MAIN: Bad usage, see top of respective c file.");
 
-		/* Get the work amount from command. */
-		num_vals = atoi(*++argv);
-		printf("Work is %d now.\n", num_vals);
-
-		/* Allocate it on the heap, large amount of memory likely wouldn't fit on stack. */
+		/* Allocate the whole array on the heap, large amount of memory likely wouldn't fit on stack. */
 		vals = (int *)malloc(num_vals * sizeof(int));
 		if (vals == NULL)
-			m_error("READ: Can't allocate vals array on heap.");
+			m_error("MAIN: Can't allocate vals array on heap.");
 
 		/* If requested, generate new input file. */
 		if (strcmp(*++argv, GEN) == 0) {
@@ -139,17 +142,23 @@ int main(int argc, char **argv) {
 
 		/* Read back input from file into array on heap. */
 		read_file(INPUT, &vals, num_vals);
+	}
 
-		/* Sort and output to file. */
-		qsort(vals, num_vals, sizeof(int), compare);
+	/* Scatter, all processes same until result at master. */
+	MPI_Scatter(vals, vals_per_p, MPI_INT, recv_buf, vals_per_p, MPI_INT, 0, MPI_COMM_WORLD);
+	printf("My first digit is: %d.\n", *recv_buf);
+	char buf[60];
+	sprintf(buf, "%s-%d", OUTPUT, rank);
+	write_file(buf, recv_buf, vals_per_p);
+
+	if (rank == ROOT) {
 		write_file(OUTPUT, vals, num_vals);
 
 		free(vals);
 		printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
-	} else {
-
 	}
 
+	free(recv_buf);
 	MPI_Finalize();
 
 	return 0;

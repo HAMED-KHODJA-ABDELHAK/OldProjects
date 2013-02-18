@@ -36,4 +36,4 @@ ${EXE_DIR}/%: %.o
 all: ${EXES}
 
 clean:
-	$(RM) $(EXES) input.txt output.txt $(FILES_TO_CLEAN)          
+	$(RM) $(EXES) input.txt* output.txt* $(FILES_TO_CLEAN)          
