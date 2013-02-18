@@ -13,20 +13,10 @@
 #include "mylib.h"
 
 /******************* Constants/Macros *********************/
-#define MAX_VAL 1000000
+
 
 /******************* Type Definitions *********************/
-/* For enums: Try to namesapce the common elements.
- * typedef enum {
- *	VAL_,
- * } name_e;
- */
 
-/* For structs:
- * typedef struct nam_s {
- *	int index;
- * } name_t;
- */
 
 /**************** Static Data Definitions *****************/
 
@@ -51,13 +41,11 @@ void m_error(const char * const mesg) {
  */
 int compare (const void *a, const void *b)
 {
-	int val_a = *((int *)a), val_b = *((int *)b);
-	return val_a - val_b;
+	return *((int *)a) - *((int *)b);
 }
 
 /*
- * Function is used only to generate the random values. All values will be in one large
- * array on the heap.
+ * Function generates size random numbers between 0 and MAX_VAL. All values put in vals array.
  */
 void gen_input(int vals[], int size) {
 	srand(time(NULL));
@@ -67,16 +55,14 @@ void gen_input(int vals[], int size) {
 }
 
 /*
- * Opens the file passed in and continues reading input until no numbers remain.
- * Returns the number of values read into the array.
- * Important note: vals will be allocated on heap, clear later with free.
+ * Opens the filename passed in and reads size numbers into the vals array.
  */
-void read_file(const char *file, int *vals, const int size) {
+void read_file(const char *filename, int *vals, const int size) {
 	// Note on size, I start it at -1 to compensate for the below while loop going one extra time.
 	int i;
 	FILE *f;
 
-	if ((f = fopen(file, "r")) == NULL)
+	if ((f = fopen(filename, "r")) == NULL)
 		m_error("READ: Failed to open file.");
 
 	for (i = 0; i < size; ++i)
@@ -88,12 +74,12 @@ void read_file(const char *file, int *vals, const int size) {
 
 /*
  * Function takes an array of values and prints them to a file.
- * All values written to a single line with spaces, new line at end.
+ * Each integer on a separate line.
  */
-void write_file(const char *file, const int *vals, const int size) {
+void write_file(const char *filename, const int *vals, const int size) {
 	FILE *f;
 
-	if ((f = fopen(file, "w")) == NULL)
+	if ((f = fopen(filename, "w")) == NULL)
 		m_error("WRITE: Failed to open file.");
 
 	for (int i = 0; i < size; ++i)

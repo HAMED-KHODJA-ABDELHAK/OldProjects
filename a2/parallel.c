@@ -2,8 +2,9 @@
  * Reference implementation of quicksort with serial implementation as baseline.
  * This program will only serially calculate the quicksort of the input file.
  * If you don't know the number of words in your input: cat input.txt | wc, second number is word count.
+ * See mylib.h/.c for functions not in this file.
  *
- * Use command: bsub -I -q COMP428 -n1 mpirun -srun ./demo/serial <work> <mode>
+ * Use command: bsub -I -q COMP428 -n1 mpirun -srun ./demo/parallel <work> <mode>
  *
  * Arguments to serial:
  * work: The amount of numbers per process, total = work * world size.
@@ -75,7 +76,7 @@ int main(int argc, char **argv) {
 	/* Malloc a workspace for local stuff. */
 	recv_buf = malloc(num_proc * sizeof(int));
 	if (recv_buf == NULL)
-		m_error("MAIN: Can't allocate wspace array on heap.");
+		m_error("MAIN: Can't allocate recv_buf array on heap.");
 
 	/* Scatter, all processes same until result at master. */
 	MPI_Scatter(vals, num_proc, MPI_INT, recv_buf, num_proc, MPI_INT, 0, MPI_COMM_WORLD);

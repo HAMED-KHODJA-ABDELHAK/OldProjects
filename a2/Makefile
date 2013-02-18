@@ -1,6 +1,6 @@
-# Make file for COMP428 assignment 1.
+# Make file for COMP428 assignment 2.
 # Just use "make" to build all programs, see respective c files for execution.
-# Use "make clean" to remove all built exes.
+# Use "make clean" to remove all built exes. Warning, also removes input/output due to large size.
 
 # Declaration to make these phoney targets, means not dependent on files.
 .PHONY: all clean
@@ -31,7 +31,7 @@ EXES = \
 	$(EXE_DIR)/parallel \
 	$(EXE_DIR)/test \
 
-# Custome rules, define how to link and compile respectively.
+# Custom rules, define how to link and compile respectively.
 $(EXE_DIR)/%: %.o 
 	$(CC) -o $@ $< $(LIBS) 
 

@@ -2,6 +2,7 @@
  * Reference implementation of quicksort with serial implementation as baseline.
  * This program will only serially calculate the quicksort of the input file.
  * If you don't know the number of words in your input: cat input.txt | wc, second number is word count.
+ * See mylib.h/.c for functions not in this file.
  *
  * Use command: bsub -I -q COMP428 -n1 mpirun -srun ./demo/serial <work> <mode>
  *
@@ -58,7 +59,6 @@ int main(int argc, char **argv) {
 
 		/* Get the work amount from command. */
 		num_vals = atoi(*++argv);
-		printf("Work is %d now.\n", num_vals);
 
 		/* Allocate it on the heap, large amount of memory likely wouldn't fit on stack. */
 		vals = (int *)malloc(num_vals * sizeof(int));
