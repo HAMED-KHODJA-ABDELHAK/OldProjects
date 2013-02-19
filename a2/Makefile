@@ -18,9 +18,9 @@ F_DEBUG:=-ggdb -Wall -Werror -Wextra -Winline -pedantic
 # Library stuff, reduce duplication.
 AR:=ar -rf
 RANLIB:=ranlib
-LIBS:=./mylib.a
-LIB_OBJS:=mylib.o
 LIB_NAME:=mylib.a
+LIBS:=$(LIB_NAME)
+LIB_OBJS:=$(subst .a,.o,$(LIB_NAME))
 
 # Generic files to clean.
 FILES_TO_CLEAN:=*.o *.a *.out *.exe *~ temp.* *.gcov *.gcda *.gcno
