@@ -15,12 +15,13 @@ RM:=@rm -rf
 CFLAGS:=-std=c99
 F_DEBUG:=-ggdb -Wall -Werror -Wextra -Winline -pedantic
 
-# Library stuff, reduce duplication.
+# Library stuff, reduce duplication. Makes an archive of common code.
 AR:=ar -rf
 RANLIB:=ranlib
-LIB_NAME:=mylib.a
-LIBS:=$(LIB_NAME)
-LIB_OBJS:=$(subst .a,.o,$(LIB_NAME))
+LIB_NAME:=mylib.a #Name only.
+LIB_ARC:=$(EXE_DIR)/$(LIB_NAME) #Final directory + name.
+LIB_OBJS:=$(subst .a,.o,$(LIB_NAME)) # Objects required.
+LIBS:=$(LIB_ARC)
 
 # Generic files to clean.
 FILES_TO_CLEAN:=*.o *.a *.out *.exe *~ temp.* *.gcov *.gcda *.gcno
@@ -39,12 +40,12 @@ $(EXE_DIR)/%: %.o
 	$(CC) $(CFLAGS) $(F_DEBUG) -o $@ -c $< 
 
 # Rules to build and clean
-all: lib $(EXES)
+all: $(LIB_ARC) $(EXES)
 
-lib: $(LIB_OBJS)
-	$(AR) $(LIB_NAME) $(LIB_OBJS) 
-	$(RANLIB) $(LIB_NAME)
-	$(RM) $(LIB_OBJS)
+$(LIB_ARC): $(LIB_OBJS)
+	$(AR) $@ $^ 
+	$(RANLIB) $@
+	$(RM) $^
 
 clean:
-	$(RM) $(EXES) input.txt* output.txt* $(FILES_TO_CLEAN)          
+	$(RM) $(EXES) $(LIB_ARC) input.txt* output.txt* $(FILES_TO_CLEAN)          
