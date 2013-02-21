@@ -105,8 +105,53 @@ void partition(int pivot, int vals[], const int vals_size, int *lt_size, int *gt
 }
 
 /*
- * Implementation of the hyper
- *  */
+ * Integer power function, takes log(n) steps to compute.
+ */
+int power(const int base, const unsigned int exp) {
+	int temp;
+
+	if (exp == 0)
+		return 1;
+
+	// Odd power.
+	if (exp % 2) {
+		temp = power(base, (exp-1)/2);
+		return temp * temp * base;
+	} else {
+		temp = power(base, exp/2);
+		return temp * temp;
+	}
+}
+
+/*
+ * Returns true only if the id passed in is the root of the given subgroup domain.
+ * The root of any given subgroup has d 0's starting from the right.
+ * That basically means it is some modulo, I'll also return the subgroup.
+ */
+int subgroup_root(const int dimension, const int id) {
+	int val = power(2, dimension);
+
+	return (id % val) == 0;
+}
+
+/*
+ * Function takes two arrays of passed size and merges them into array a.
+ * Assumes that a is in fact a malloced array that can be freed.
+ */
+void array_union(int *a[], int a_size, const int b[], const int b_size) {
+	int *temp = malloc((a_size + b_size) * sizeof(int));
+	memcpy(temp, *a, a_size*sizeof(int));
+	memcpy(temp+a_size, b, b_size*sizeof(int));
+	free(*a);
+	*a = temp;
+	a_size += b_size;
+}
+
+/*
+ * Implementation of the hyper quicksort for any given dimension. Topology is assumed to be entirely
+ * in MPI_COMM_WORLD. Details follow traditional hypercube algorithm seen on page 422 of Parallel Computing (Gupta).
+ * At the end, each processor with local_size elements in local will be ready to locally sort.
+ */
 void hyper_quicksort(const int dimension, const int id, const int root[], const int root_size,
 		int local[], int local_size, int recv[], int recv_size) {
 	MPI_Status mpi_status;
@@ -115,7 +160,7 @@ void hyper_quicksort(const int dimension, const int id, const int root[], const 
 
 	/* Iterate for all dimensions of cube. */
 	for (int d = dimension-1; d >= 0; --d) {
-		/* Determine partner that is opposite this dimension of cube. */
+		/* Determine partner that is opposite this dimension of cube. Use xor to flip dth bit. */
 		int partner = id ^ (1<<d);
 
 		/* Select and broadcast pivot. */
@@ -140,14 +185,9 @@ void hyper_quicksort(const int dimension, const int id, const int root[], const 
 			local_size = lt_size;
 		}
 
-		/* All this to make local the union of recv and local buffers. */
+		/* Get the received count and call array union function to merge into local. */
 		MPI_Get_count(&mpi_status, MPI_INT, &recv_size);
-		int *temp = malloc((local_size + recv_size) * sizeof(int));
-		memcpy(temp, local, local_size*sizeof(int));
-		memcpy(temp+local_size, recv, recv_size*sizeof(int));
-		local_size += recv_size;
-		free(local);
-		local = temp;
+		array_union(&local, local_size, recv, recv_size);
 	}
 }
 
@@ -158,7 +198,6 @@ int main(int argc, char **argv) {
 	int id = 0, world = 0, num_proc = 0, root_size = 0, recv_size = 0, local_size = 0;
 	int *root = NULL, *recv = NULL, *local = NULL;
 	double start = 0.0;
-
 
 	/* Standard init for MPI, start timer after init. Get rank and size too. */
 	MPI_Init(&argc, &argv);
