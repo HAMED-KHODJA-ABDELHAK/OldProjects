@@ -10,7 +10,7 @@
 #define INPUT "input.txt"
 #define OUTPUT "output.txt"
 #define GENERATE_FLAG "gen"
-#define MAX_VAL 1000000
+#define MAX_VAL 10000
 #define ROOT 0
 
 /******************* Type Declarations ********************/
