@@ -156,7 +156,7 @@ int main(int argc, char **argv) {
 
 	/* Iterate for all dimensions of cube. */
 	for (int d = MAX_DIM-1; d >= 0; ++d) {
-		/* Determine opposite partner. */
+		/* Determine partner that is opposite this dimension of cube. */
 		int partner = id ^ (1<<d);
 
 		/* Select and broadcast pivot. */
@@ -168,14 +168,13 @@ int main(int argc, char **argv) {
 		/* Partition the array. */
 		partition(pivot, local, local_size, &lt_size, &gt_size);
 
-		/* Determine position in the cube. Left shift 1 by dimension, upper if below true.
-		 * Once exchange complete, update local to be union of kept and new values. */
+		/* Determine position in the cube. If below is true, I am in upper. */
 		if (id & (1<<d)) {
 			MPI_Sendrecv(local, lt_size, MPI_INT, partner, ROOT,
 						recv, num_proc, MPI_INT, partner, MPI_ANY_TAG,
 						MPI_COMM_WORLD, &mpi_status);
 			/* We have sent lower portion, move elements greater down. Update local_size.*/
-			memmove(local, local+lt_size, gt_size);
+			memmove(local, local+lt_size, gt_size*sizeof(int));
 			local_size = gt_size;
 		} else {
 			MPI_Sendrecv(local+lt_size, gt_size, MPI_INT, partner, ROOT,
@@ -188,8 +187,8 @@ int main(int argc, char **argv) {
 		/* All this to make local the union of recv and local buffers. */
 		MPI_Get_count(&mpi_status, MPI_INT, &recv_size);
 		int *temp = malloc(local_size + recv_size);
-		memcpy(temp, local, local_size);
-		memcpy(temp+local_size, recv, recv_size);
+		memcpy(temp, local, local_size*sizeof(int));
+		memcpy(temp+local_size, recv, recv_size*sizeof(int));
 		local_size += recv_size;
 		free(local);
 		local = temp;
