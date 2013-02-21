@@ -177,9 +177,8 @@ int main(int argc, char **argv) {
 			memmove(local, local+lt_size, gt_size*sizeof(int));
 			local_size = gt_size;
 		} else {
-			MPI_Sendrecv(local+lt_size, gt_size, MPI_INT, partner, ROOT,
-						recv, num_proc, MPI_INT, partner, MPI_ANY_TAG,
-						MPI_COMM_WORLD, &mpi_status);
+			MPI_Recv(recv, recv_size, MPI_INT, partner, MPI_ANY_TAG, MPI_COMM_WORLD, &mpi_status);
+			MPI_Send(local+lt_size, gt_size, MPI_INT, partner, 0, MPI_COMM_WORLD);
 			/* We have sent upper portion of array, merely update size and ignore older elements. */
 			local_size = lt_size;
 		}
