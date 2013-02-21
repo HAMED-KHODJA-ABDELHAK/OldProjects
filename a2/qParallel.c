@@ -24,7 +24,8 @@
 
 /******************* Constants/Macros *********************/
 // Maximum dimension, expecting a hypercube of dimension 3.
-#define MAX_DIM 3
+#define MAX_DIM 		3
+#define SEND_TAG 		0
 
 /******************* Type Definitions *********************/
 
@@ -111,6 +112,7 @@ int main(int argc, char **argv) {
 	int *root_vals = NULL, *recv = NULL, *local;
 	double start;
 	MPI_Status mpi_status;
+	MPI_Request mpi_request;
 
 	/* Standard init for MPI, start timer after init. Get rank and size too. */
 	MPI_Init(&argc, &argv);
@@ -149,7 +151,7 @@ int main(int argc, char **argv) {
 
 	local = (int *)malloc(num_proc * 4 * sizeof(int));
 	if (local == NULL)
-		m_error("MAIN: Can't allocate root_vals array on heap.");
+		m_error("MAIN: Can't allocate local array on heap.");
 
 	/* Scatter to across processes and then do hyper quicksort algorithm. */
 	MPI_Scatter(root_vals, num_proc, MPI_INT, local, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
@@ -160,9 +162,8 @@ int main(int argc, char **argv) {
 		int partner = id ^ (1<<d);
 
 		/* Select and broadcast pivot. */
-		if (id == ROOT) {
+		if (id == ROOT)
 			pivot = select_pivot(root_vals, num_total);
-		}
 		MPI_Bcast(&pivot, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
 
 		/* Partition the array. */
@@ -170,22 +171,21 @@ int main(int argc, char **argv) {
 
 		/* Determine position in the cube. If below is true, I am in upper. */
 		if (id & (1<<d)) {
-			MPI_Sendrecv(local, lt_size, MPI_INT, partner, ROOT,
-						recv, num_proc, MPI_INT, partner, MPI_ANY_TAG,
-						MPI_COMM_WORLD, &mpi_status);
+			MPI_Isend(local, lt_size, MPI_INT, partner, SEND_TAG, MPI_COMM_WORLD, &mpi_request);
+			MPI_Recv(recv, recv_size, MPI_INT, partner, SEND_TAG, MPI_COMM_WORLD, &mpi_status);
 			/* We have sent lower portion, move elements greater down. Update local_size.*/
 			memmove(local, local+lt_size, gt_size*sizeof(int));
 			local_size = gt_size;
 		} else {
-			MPI_Recv(recv, recv_size, MPI_INT, partner, MPI_ANY_TAG, MPI_COMM_WORLD, &mpi_status);
-			MPI_Send(local+lt_size, gt_size, MPI_INT, partner, 0, MPI_COMM_WORLD);
+			MPI_Isend(local+lt_size, gt_size, MPI_INT, partner, SEND_TAG, MPI_COMM_WORLD, &mpi_request);
+			MPI_Recv(recv, recv_size, MPI_INT, partner, SEND_TAG, MPI_COMM_WORLD, &mpi_status);
 			/* We have sent upper portion of array, merely update size and ignore older elements. */
 			local_size = lt_size;
 		}
 
 		/* All this to make local the union of recv and local buffers. */
 		MPI_Get_count(&mpi_status, MPI_INT, &recv_size);
-		int *temp = malloc(local_size + recv_size);
+		int *temp = malloc((local_size + recv_size) * sizeof(int));
 		memcpy(temp, local, local_size*sizeof(int));
 		memcpy(temp+local_size, recv, recv_size*sizeof(int));
 		local_size += recv_size;
@@ -201,7 +201,11 @@ int main(int argc, char **argv) {
 	if (id == ROOT) {
 		write_file(OUTPUT, root_vals, num_total);
 		printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
+		free(root_vals);
 	}
+
+	free(local);
+	free(recv);
 
 	MPI_Finalize();
 
