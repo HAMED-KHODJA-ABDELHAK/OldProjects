@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
 	MPI_Scatter(root_vals, num_proc, MPI_INT, local, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
 
 	/* Iterate for all dimensions of cube. */
-	for (int d = MAX_DIM-1; d >= 0; ++d) {
+	for (int d = MAX_DIM-1; d >= 0; --d) {
 		/* Determine partner that is opposite this dimension of cube. */
 		int partner = id ^ (1<<d);
 
