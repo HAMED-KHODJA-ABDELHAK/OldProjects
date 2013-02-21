@@ -44,7 +44,7 @@
  * Returns the pivot based on passed in array.
  * Currently: Median of three algorithm, select median of first, last and middle elements.
  */
-int select_pivot(int vals[], int size) {
+int select_pivot(const int vals[], const int size) {
 	const int start = 0, mid = size/2, end = size-1;
 	int large, small, pivot;
 
@@ -105,65 +105,22 @@ void partition(int pivot, int vals[], const int vals_size, int *lt_size, int *gt
 }
 
 /*
- * Main execution body.
- */
-int main(int argc, char **argv) {
-	int id, world, num_proc, num_total, pivot, lt_size, gt_size, recv_size, local_size;
-	int *root_vals = NULL, *recv = NULL, *local;
-	double start;
+ * Implementation of the hyper
+ *  */
+void hyper_quicksort(const int dimension, const int id, const int root[], const int root_size,
+		int local[], int local_size, int recv[], int recv_size) {
 	MPI_Status mpi_status;
 	MPI_Request mpi_request;
-
-	/* Standard init for MPI, start timer after init. Get rank and size too. */
-	MPI_Init(&argc, &argv);
-	start = MPI_Wtime();
-	MPI_Comm_rank(MPI_COMM_WORLD, &id);
-	MPI_Comm_size(MPI_COMM_WORLD, &world);
-
-	/* Get the work amount from command for each process. */
-	num_proc = atoi(*++argv);
-	num_total = num_proc * world;
-
-	/* Root only work, ensure good usage and proper input. */
-	if (id == ROOT) {
-		if (argc < 3)
-			m_error("MAIN: Bad usage, see top of respective c file.");
-
-		/* Allocate the whole array on the heap, large amount of memory likely wouldn't fit on stack. */
-		root_vals = (int *)malloc(num_total * sizeof(int));
-		if (root_vals == NULL)
-			m_error("MAIN: Can't allocate root_vals array on heap.");
-
-		/* If requested, generate new input file. */
-		if (strcmp(*++argv, GENERATE_FLAG) == 0) {
-			gen_input(root_vals, num_total);
-			write_file(INPUT, root_vals, num_total);
-		}
-
-		/* Read back input from file into array on heap. */
-		read_file(INPUT, root_vals, num_total);
-	}
-
-	/* Allocate a recv buf of size n/p and a local size of 4*n/p (max case where receives all elements in 3 exchanges). */
-	recv = (int *)malloc(num_proc * sizeof(int));
-	if (recv == NULL)
-		m_error("MAIN: Can't allocate recv array on heap.");
-
-	local = (int *)malloc(num_proc * 4 * sizeof(int));
-	if (local == NULL)
-		m_error("MAIN: Can't allocate local array on heap.");
-
-	/* Scatter to across processes and then do hyper quicksort algorithm. */
-	MPI_Scatter(root_vals, num_proc, MPI_INT, local, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
+	int pivot = 0, lt_size = 0, gt_size = 0;
 
 	/* Iterate for all dimensions of cube. */
-	for (int d = MAX_DIM-1; d >= 0; --d) {
+	for (int d = dimension-1; d >= 0; --d) {
 		/* Determine partner that is opposite this dimension of cube. */
 		int partner = id ^ (1<<d);
 
 		/* Select and broadcast pivot. */
 		if (id == ROOT)
-			pivot = select_pivot(root_vals, num_total);
+			pivot = select_pivot(root, root_size);
 		MPI_Bcast(&pivot, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
 
 		/* Partition the array. */
@@ -192,16 +149,71 @@ int main(int argc, char **argv) {
 		free(local);
 		local = temp;
 	}
+}
+
+/*
+ * Main execution body.
+ */
+int main(int argc, char **argv) {
+	int id = 0, world = 0, num_proc = 0, root_size = 0, recv_size = 0, local_size = 0;
+	int *root = NULL, *recv = NULL, *local = NULL;
+	double start = 0.0;
+
+
+	/* Standard init for MPI, start timer after init. Get rank and size too. */
+	MPI_Init(&argc, &argv);
+	start = MPI_Wtime();
+	MPI_Comm_rank(MPI_COMM_WORLD, &id);
+	MPI_Comm_size(MPI_COMM_WORLD, &world);
+
+	/* Get the work amount from command for each process. */
+	num_proc = atoi(*++argv);
+	root_size = num_proc * world;
+
+	/* Root only work, ensure good usage and proper input. */
+	if (id == ROOT) {
+		if (argc < 3)
+			m_error("MAIN: Bad usage, see top of respective c file.");
+
+		/* Allocate the whole array on the heap, large amount of memory likely wouldn't fit on stack. */
+		root = (int *)malloc(root_size * sizeof(int));
+		if (root == NULL)
+			m_error("MAIN: Can't allocate root_vals array on heap.");
+
+		/* If requested, generate new input file. */
+		if (strcmp(*++argv, GENERATE_FLAG) == 0) {
+			gen_input(root, root_size);
+			write_file(INPUT, root, root_size);
+		}
+
+		/* Read back input from file into array on heap. */
+		read_file(INPUT, root, root_size);
+	}
+
+	/* Allocate a recv buf of size n/p and a local size of 4*n/p (max case where receives all elements in 3 exchanges). */
+	recv = (int *)malloc(num_proc * sizeof(int));
+	if (recv == NULL)
+		m_error("MAIN: Can't allocate recv array on heap.");
+
+	local = (int *)malloc(num_proc * 4 * sizeof(int));
+	if (local == NULL)
+		m_error("MAIN: Can't allocate local array on heap.");
+
+	/* Scatter to across processes and then do hyper quicksort algorithm. */
+	MPI_Scatter(root, num_proc, MPI_INT, local, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
+
+	/* Rearrange the cube so that we have roughly sorted data. */
+	hyper_quicksort(MAX_DIM, id, root, root_size, local, local_size, recv, recv_size);
 
 	/* Quicksort local array and then send back to root. */
 	qsort(local, local_size, sizeof(int), compare);
-	MPI_Gather(local, local_size, MPI_INT, root_vals, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Gather(local, local_size, MPI_INT, root, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
 
 	/* Last step, root has result write to output the sorted array. */
 	if (id == ROOT) {
-		write_file(OUTPUT, root_vals, num_total);
+		write_file(OUTPUT, root, root_size);
 		printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
-		free(root_vals);
+		free(root);
 	}
 
 	free(local);
