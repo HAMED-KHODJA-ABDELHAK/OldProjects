@@ -12,10 +12,12 @@
 #include <time.h>
 
 /* Project Headers */
+#include "mpi.h"
 #include "mylib.h"
 
 /******************* Constants/Macros *********************/
-
+#define MAX_DIM			3
+#define SEND_TAG		1
 
 /******************* Type Definitions *********************/
 
@@ -74,12 +76,43 @@ void val_print(int vals[], int size) {
 /**
  * Main loop of the function.
  */
-int main(void) {
-	int id = 4;
+int main(int argc, char **argv) {
+	int vals_size = 10, vals[vals_size], recv[vals_size], id, world, recv_size;
+	MPI_Request mpi_request;
+	MPI_Status mpi_status;
+	srand(time(NULL));
 
-	if (id & (1<<2))
-		printf("True.");
+	/* Standard init for MPI, start timer after init. Get rank and size too. */
+	MPI_Init(&argc, &argv);
+	MPI_Comm_rank(MPI_COMM_WORLD, &id);
+	MPI_Comm_size(MPI_COMM_WORLD, &world);
 
+	for (int i = 0; i < vals_size; ++i)
+		vals[i] = rand() % 100;
+
+	/* Iterate for all dimensions of cube. */
+	for (int d = MAX_DIM-1; d >= 0; ++d) {
+		/* Determine partner that is opposite this dimension of cube. */
+		int partner = id ^ (1<<d);
+
+		/* Determine position in the cube. If below is true, I am in upper. */
+		if (id & (1<<d)) {
+			MPI_Isend(vals, 2, MPI_INT, partner, SEND_TAG, MPI_COMM_WORLD, &mpi_request);
+			MPI_Recv(recv, vals_size, MPI_INT, partner, SEND_TAG, MPI_COMM_WORLD, &mpi_status);
+		} else {
+			MPI_Isend(vals, 3, MPI_INT, partner, SEND_TAG, MPI_COMM_WORLD, &mpi_request);
+			MPI_Recv(recv, vals_size, MPI_INT, partner, SEND_TAG, MPI_COMM_WORLD, &mpi_status);
+		}
+
+		MPI_Get_count(&mpi_status, MPI_INT, &recv_size);
+
+		printf("I am %d of size %d. I got %d ints from my partner %d.\nThe ints are:\n",
+				id, world, recv_size, partner);
+		for (int i = 0; i < recv_size; ++i) {
+			printf("%d - ", recv[i]);
+		}
+		printf("\n");
+	}
 
 	return 0;
 }
