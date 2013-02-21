@@ -9,6 +9,7 @@
 //#include <ctype.h>
 //#include <limits.h>
 //#include <assert.h>
+#include <time.h>
 
 /* Project Headers */
 #include "mylib.h"
@@ -73,7 +74,7 @@ void val_print(int vals[], int size) {
 /**
  * Main loop of the function.
  */
-int main(int argc, char **argv) {
+int main(void) {
 	int vals_size = 49, vals[vals_size], lt_size, gt_size;
 	srand(time(NULL));
 

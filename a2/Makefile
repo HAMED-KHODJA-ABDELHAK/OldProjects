@@ -13,7 +13,7 @@ EXE_DIR=./demo
 CC:=mpicc
 RM:=@rm -rf
 CFLAGS:=-std=c99
-F_DEBUG:=-ggdb -Wall -Wextra -Winline -pedantic
+F_DEBUG:=-ggdb -Wall -Werror -Wextra -Winline -pedantic
 
 # Library stuff, reduce duplication. Makes an archive of common code.
 AR:=ar -rf

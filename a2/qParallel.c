@@ -165,7 +165,6 @@ int main(int argc, char **argv) {
 	/* Scatter, all processes same until result at master. */
 //	MPI_Scatter(root_vals, num_proc, MPI_INT, recv_buf, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
 //	qsort(recv_buf, num_proc, sizeof(int), compare);
-//	MPI_Gather(recv_buf, num_proc, MPI_INT, root_vals, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
 
 	if (id == ROOT) {
 		int ltvals_size = 0, gtvals_size = 0;
@@ -174,10 +173,12 @@ int main(int argc, char **argv) {
 		printf("Selected %d as the pivot.\n", pivot);
 
 		in_place_partition(pivot, root_vals, num_total, &ltvals_size, &gtvals_size);
-//
-//		write_file(OUTPUT"ltvals", root_vals, ltvals_size);
-//		write_file(OUTPUT"gtvals", root_vals+ltvals_size, gtvals_size);
+
+		write_file(OUTPUT"ltvals", root_vals, ltvals_size);
+		write_file(OUTPUT"gtvals", root_vals+ltvals_size, gtvals_size);
 	}
+
+//	MPI_Gather(recv_buf, num_proc, MPI_INT, root_vals, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
 
 	/* Last step, root has result write to output the sorted array. */
 	if (id == ROOT) {
