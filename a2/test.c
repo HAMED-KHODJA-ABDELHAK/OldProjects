@@ -75,19 +75,11 @@ void val_print(int vals[], int size) {
  * Main loop of the function.
  */
 int main(void) {
-	int vals_size = 49, vals[vals_size], lt_size, gt_size;
-	srand(time(NULL));
+	int id = 4;
 
-	for (int i = 0; i < vals_size; ++i)
-		vals[i] = rand() % 100;
+	if (id & (1<<2))
+		printf("True.");
 
-	val_print(vals, vals_size);
-
-	in_place_partition(49, vals, vals_size, &lt_size, &gt_size);
-
-	val_print(vals, vals_size);
-
-	printf("Last less, first greater: %d %d\n", vals[lt_size-1], vals[lt_size]);
 
 	return 0;
 }

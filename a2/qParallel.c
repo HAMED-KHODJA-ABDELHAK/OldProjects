@@ -23,7 +23,8 @@
 #include "mylib.h"
 
 /******************* Constants/Macros *********************/
-
+// Maximum dimension, expecting a hypercube of dimension 3.
+#define MAX_DIM 3
 
 /******************* Type Definitions *********************/
 
@@ -70,21 +71,6 @@ int select_pivot(int vals[], int size) {
 }
 
 /*
- * Partition one array into a less than or equal array (ltvals) and a greater than or equal array (gtvals).
- */
-void partition(const int vals[], const int vals_size, const int pivot,
-		int lt[], int *lt_size, int gt[], int *gt_size) {
-	*lt_size = *gt_size = 0;
-
-	for (int i = 0; i < vals_size; ++i) {
-		if (vals[i] > pivot)
-			gt[(*gt_size)++] = vals[i];
-		else
-			lt[(*lt_size)++] = vals[i];
-	}
-}
-
-/*
  * Simple swap function.
  */
 void swap(int *a, int *b) {
@@ -97,7 +83,7 @@ void swap(int *a, int *b) {
  * Partition the passed in array in place. All elements at the front will be less than or equal to pivot.
  * All elements at back will be strictly greater than pivot.
  */
-void in_place_partition(int pivot, int vals[], const int vals_size, int *lt_size, int *gt_size) {
+void partition(int pivot, int vals[], const int vals_size, int *lt_size, int *gt_size) {
 	int *left = vals, *right = vals + vals_size-1;
 	*lt_size = *gt_size = 0;
 
@@ -115,27 +101,26 @@ void in_place_partition(int pivot, int vals[], const int vals_size, int *lt_size
 		if ((right-left) > 0)
 			swap(left, right);
 	}
-
-	printf("Exited the loop.\n");
 }
 
 /*
  * Main execution body.
  */
 int main(int argc, char **argv) {
-	int id, size, num_proc, num_total, pivot;
-	int *root_vals = NULL, *recv_buf = NULL;
+	int id, world, num_proc, num_total, pivot, lt_size, gt_size, recv_size, local_size;
+	int *root_vals = NULL, *recv = NULL, *local;
 	double start;
+	MPI_Status mpi_status;
 
 	/* Standard init for MPI, start timer after init. Get rank and size too. */
 	MPI_Init(&argc, &argv);
 	start = MPI_Wtime();
 	MPI_Comm_rank(MPI_COMM_WORLD, &id);
-	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	MPI_Comm_size(MPI_COMM_WORLD, &world);
 
 	/* Get the work amount from command for each process. */
 	num_proc = atoi(*++argv);
-	num_total = num_proc * size;
+	num_total = num_proc * world;
 
 	/* Root only work, ensure good usage and proper input. */
 	if (id == ROOT) {
@@ -157,37 +142,69 @@ int main(int argc, char **argv) {
 		read_file(INPUT, root_vals, num_total);
 	}
 
-	/* Malloc a workspace for local stuff. */
-	recv_buf = malloc(num_proc * sizeof(int));
-	if (recv_buf == NULL)
-		m_error("MAIN: Can't allocate recv_buf array on heap.");
+	/* Allocate a recv buf of size n/p and a local size of 4*n/p (max case where receives all elements in 3 exchanges). */
+	recv = (int *)malloc(num_proc * sizeof(int));
+	if (recv == NULL)
+		m_error("MAIN: Can't allocate recv array on heap.");
 
-	/* Scatter, all processes same until result at master. */
-//	MPI_Scatter(root_vals, num_proc, MPI_INT, recv_buf, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
-//	qsort(recv_buf, num_proc, sizeof(int), compare);
+	local = (int *)malloc(num_proc * 4 * sizeof(int));
+	if (local == NULL)
+		m_error("MAIN: Can't allocate root_vals array on heap.");
 
-	if (id == ROOT) {
-		int ltvals_size = 0, gtvals_size = 0;
+	/* Scatter to across processes and then do hyper quicksort algorithm. */
+	MPI_Scatter(root_vals, num_proc, MPI_INT, local, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
 
-		pivot = select_pivot(root_vals, num_total);
-		printf("Selected %d as the pivot.\n", pivot);
+	/* Iterate for all dimensions of cube. */
+	for (int d = MAX_DIM-1; d >= 0; ++d) {
+		/* Determine opposite partner. */
+		int partner = id ^ (1<<d);
 
-		in_place_partition(pivot, root_vals, num_total, &ltvals_size, &gtvals_size);
+		/* Select and broadcast pivot. */
+		if (id == ROOT) {
+			pivot = select_pivot(root_vals, num_total);
+		}
+		MPI_Bcast(&pivot, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
 
-		write_file(OUTPUT"ltvals", root_vals, ltvals_size);
-		write_file(OUTPUT"gtvals", root_vals+ltvals_size, gtvals_size);
+		/* Partition the array. */
+		partition(pivot, local, local_size, &lt_size, &gt_size);
+
+		/* Determine position in the cube. Left shift 1 by dimension, upper if below true.
+		 * Once exchange complete, update local to be union of kept and new values. */
+		if (id & (1<<d)) {
+			MPI_Sendrecv(local, lt_size, MPI_INT, partner, ROOT,
+						recv, num_proc, MPI_INT, partner, MPI_ANY_TAG,
+						MPI_COMM_WORLD, &mpi_status);
+			/* We have sent lower portion, move elements greater down. Update local_size.*/
+			memmove(local, local+lt_size, gt_size);
+			local_size = gt_size;
+		} else {
+			MPI_Sendrecv(local+lt_size, gt_size, MPI_INT, partner, ROOT,
+						recv, num_proc, MPI_INT, partner, MPI_ANY_TAG,
+						MPI_COMM_WORLD, &mpi_status);
+			/* We have sent upper portion of array, merely update size and ignore older elements. */
+			local_size = lt_size;
+		}
+
+		/* All this to make local the union of recv and local buffers. */
+		MPI_Get_count(&mpi_status, MPI_INT, &recv_size);
+		int *temp = malloc(local_size + recv_size);
+		memcpy(temp, local, local_size);
+		memcpy(temp+local_size, recv, recv_size);
+		local_size += recv_size;
+		free(local);
+		local = temp;
 	}
 
-//	MPI_Gather(recv_buf, num_proc, MPI_INT, root_vals, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
+	/* Quicksort local array and then send back to root. */
+	qsort(local, local_size, sizeof(int), compare);
+	MPI_Gather(local, local_size, MPI_INT, root_vals, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
 
 	/* Last step, root has result write to output the sorted array. */
 	if (id == ROOT) {
 		write_file(OUTPUT, root_vals, num_total);
-		free(root_vals);
 		printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
 	}
 
-	free(recv_buf);
 	MPI_Finalize();
 
 	return 0;
