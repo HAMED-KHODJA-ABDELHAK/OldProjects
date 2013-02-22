@@ -39,10 +39,10 @@ void val_print(int vals[], int size) {
  */
 //int main(int argc, char **argv) {
 int main(void) {
-	int buf_size = 200, id = 2, world = 4, ar_size = 5, ar[] = {20, 44, 1, 99, 7};
+	int buf_size = 200, id = 2, ar_size = 5, ar[] = {20, 44, 1, 99, 7};
 	char buf[buf_size], tag[] = "TEST";
 
-	lib_trace_array(buf, buf_size, tag, ar, ar_size, id, world);
+	lib_trace_array(buf, buf_size, tag, ar, ar_size, id);
 	printf("Expected: %s\n", buf);
 
 	return 0;
