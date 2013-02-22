@@ -47,7 +47,7 @@ void hyper_quicksort(const int dimension, const int id, int local[], int local_s
 		int recv[], int recv_size) {
 	MPI_Status mpi_status;
 	MPI_Request mpi_request;
-	int pivot = 0, lt_size = 0, gt_size = 0, group = 0, member = 0, partner = 0;
+	int pivot = 0, lt_size = 0, gt_size = 0, group = 0, member = 0, partner = 0, received = 0;
 
 	/* Iterate for all dimensions of cube. */
 	for (int d = dimension-1; d >= 0; --d) {
@@ -83,10 +83,10 @@ void hyper_quicksort(const int dimension, const int id, int local[], int local_s
 		}
 
 		/* Get the received count and call array union function to merge into local. */
-		MPI_Get_count(&mpi_status, MPI_INT, &recv_size);
-		lib_array_union(&local, &local_size, recv, recv_size);
+		MPI_Get_count(&mpi_status, MPI_INT, &received);
+		lib_array_union(&local, &local_size, recv, received);
 
-		lib_trace_array(buf, BUF_SIZE, "RECV:", recv, recv_size, id);
+		lib_trace_array(buf, BUF_SIZE, "RECV:", recv, received, id);
 		printf("%s", buf);
 		MPI_Barrier(MPI_COMM_WORLD);
 
