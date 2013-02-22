@@ -79,6 +79,11 @@ void hyper_quicksort(const int dimension, const int id, const int root[], const 
 		/* Get the received count and call array union function to merge into local. */
 		MPI_Get_count(&mpi_status, MPI_INT, &recv_size);
 		lib_array_union(&local, &local_size, recv, recv_size);
+
+		if (id == ROOT)
+			printf("ROUND %d.\n", d);
+		lib_trace_array(buf, BUF_SIZE, "SCATTER:", local, local_size, id);
+		printf("%s", buf);
 	}
 }
 
@@ -96,7 +101,7 @@ int main(int argc, char **argv) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &id);
 	MPI_Comm_size(MPI_COMM_WORLD, &world);
 
-	/* Protection. */
+	/* Protection from invalid use. */
 	if (argc < 3)
 		lib_error("MAIN: Bad usage, see top of respective c file.");
 
@@ -133,15 +138,14 @@ int main(int argc, char **argv) {
 
 	/* Scatter to across processes and then do hyper quicksort algorithm. */
 	MPI_Scatter(root, num_proc, MPI_INT, local, local_size, MPI_INT, 0, MPI_COMM_WORLD);
-	lib_trace_array(buf, BUF_SIZE, "MAIN", local, local_size, id, world);
+	lib_trace_array(buf, BUF_SIZE, "SCATTER:", local, local_size, id);
 	printf("%s", buf);
-	exit(1);
 
-//	/* Rearrange the cube so that we have roughly sorted data. */
-//	hyper_quicksort(MAX_DIM, id, root, root_size, local, local_size, recv, recv_size);
+	/* Rearrange the cube so that we have roughly sorted data. */
+	hyper_quicksort(MAX_DIM, id, root, root_size, local, local_size, recv, recv_size);
 
 	/* Quicksort local array and then send back to root. */
-	qsort(local, local_size, sizeof(int), lib_compare);
+//	qsort(local, local_size, sizeof(int), lib_compare);
 	MPI_Gather(local, local_size, MPI_INT, root, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
 
 	/* Last step, root has result write to output the sorted array. */

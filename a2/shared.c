@@ -206,11 +206,11 @@ void lib_array_union(int *a[], int *a_size, const int b[], const int b_size) {
 /*
  * Tracing function, takes a buffer of adequate size and traces the values in array.
  */
-void lib_trace_array(char *buf, int buf_size, char *tag, int array[], int size, int id, int world) {
+void lib_trace_array(char *buf, int buf_size, char *tag, int array[], int size, int id) {
 	int count;
 
 	/* Using snprintf to avoid overflowing the buffer if too small. */
-	count = snprintf(buf, buf_size, "%s: I am %d of %d. I have numbers: ", tag, id, world);
+	count = snprintf(buf, buf_size, "%s: I am %d. I have numbers: ", tag, id);
 	if ((buf_size - count) < 1)
 		lib_error("LIB_TRACE: Insufficient buffer for print.");
 
@@ -226,4 +226,11 @@ void lib_trace_array(char *buf, int buf_size, char *tag, int array[], int size, 
 
 	/* Ensure always null terminated, only catches if buffer too small. */
 	buf[buf_size-1] = '\0';
+}
+
+/*
+ * In place merge of multiple arrays.
+ */
+void lib_merge_arrays() {
+
 }

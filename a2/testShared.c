@@ -194,10 +194,10 @@ void test_array_union(void) {
  * Test to exercise the array tracing function.
  */
 void test_trace_array(void) {
-	int buf_size = 200, id = 2, world = 4, ar_size = 5, ar[] = {20, 44, 1, 99, 7};
-	char buf[buf_size], tag[] = "TEST", expected[] = "TEST: I am 2 of 4. I have numbers: 20 44 1 99 7 \n";
+	int buf_size = 200, id = 2, ar_size = 5, ar[] = {20, 44, 1, 99, 7};
+	char buf[buf_size], tag[] = "TEST", expected[] = "TEST: I am 2. I have numbers: 20 44 1 99 7 \n";
 
-	lib_trace_array(buf, buf_size, tag, ar, ar_size, id, world);
+	lib_trace_array(buf, buf_size, tag, ar, ar_size, id);
 	CU_ASSERT_STRING_EQUAL(buf, expected);
 }
 

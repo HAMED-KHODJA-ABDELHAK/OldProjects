@@ -90,7 +90,7 @@ void lib_array_union(int *a[], int *a_size, const int b[], const int b_size);
 /*
  * Tracing function, takes a buffer of adequate size and traces the values in array.
  */
-void lib_trace_array(char *buf, int buf_size, char *tag, int array[], int size, int id, int world);
+void lib_trace_array(char *buf, int buf_size, char *tag, int array[], int size, int id);
 
 #endif /* _SHARED_H_ */
 
