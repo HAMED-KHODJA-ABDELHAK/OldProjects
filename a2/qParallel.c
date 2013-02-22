@@ -164,7 +164,8 @@ int main(int argc, char **argv) {
 	local = (int *)malloc(root_size * sizeof(int));
 	if (local == NULL)
 		lib_error("MAIN: Can't allocate local array on heap.");
-	local_size = recv_size = root_size;
+	recv_size = root_size;
+	local_size = num_proc;
 
 	/* Scatter to across processes and then do hyper quicksort algorithm. */
 	MPI_Scatter(root, num_proc, MPI_INT, local, local_size, MPI_INT, 0, MPI_COMM_WORLD);
