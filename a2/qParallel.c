@@ -43,7 +43,7 @@ static char buf[BUF_SIZE];
  * in MPI_COMM_WORLD. Details follow traditional hypercube algorithm seen on page 422 of Parallel Computing (Gupta).
  * At the end, each processor with local_size elements in local will be ready to locally sort.
  */
-void hyper_quicksort(const int dimension, const int id, int local[], int local_size,
+int hyper_quicksort(const int dimension, const int id, int local[], int local_size,
 		int recv[], int recv_size) {
 	MPI_Status mpi_status;
 	MPI_Request mpi_request;
@@ -94,6 +94,8 @@ void hyper_quicksort(const int dimension, const int id, int local[], int local_s
 		printf("%s", buf);
 		MPI_Barrier(MPI_COMM_WORLD);
 	}
+
+	return local_size;
 }
 
 /*
@@ -156,10 +158,10 @@ int main(int argc, char **argv) {
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	/* Rearrange the cube so that we have roughly sorted data. */
-	hyper_quicksort(MAX_DIM, id, local, local_size, recv, recv_size);
+	local_size = hyper_quicksort(MAX_DIM, id, local, local_size, recv, recv_size);
 
 	/* Quicksort local array and then send back to root. */
-//	qsort(local, local_size, sizeof(int), lib_compare);
+	qsort(local, local_size, sizeof(int), lib_compare);
 	MPI_Gather(local, local_size, MPI_INT, root, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
 
 	/* Last step, root has result write to output the sorted array. */
