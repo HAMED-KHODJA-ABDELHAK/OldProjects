@@ -206,10 +206,9 @@ void test_trace_array(void) {
  */
 void test_subgroup_info(void) {
 	int dimension = 2, id = 6;
-	subgroup_info_t actual, expected = {4, 1, 2, 4};
-	memset(&actual, '\0', sizeof(subgroup_info_t));
+	subgroup_info_t actual = {0, 0, 0 ,0, id}, expected = {4, 1, 2, 4, id};
 
-	lib_subgroup_info(dimension, id, &actual);
+	lib_subgroup_info(dimension, &actual);
 
 	CU_ASSERT(actual.group_num == expected.group_num);
 	CU_ASSERT(actual.member_num == expected.member_num);

@@ -179,11 +179,11 @@ int lib_power(const int base, const unsigned int exp) {
  * The root of any given subgroup has d 0's starting from the right.
  * That basically means it is some modulo, I'll also return the subgroup and it's partner.
  */
-void lib_subgroup_info(const int dimension, const int id, subgroup_info_t *info) {
+void lib_subgroup_info(const int dimension, subgroup_info_t *info) {
 	info->group_size = lib_power(2, dimension);
-	info->group_num = id / info->group_size;
-	info->member_num = id % info->group_size;
-	info->partner = id ^ (1<<(dimension-1));
+	info->group_num = info->world_id / info->group_size;
+	info->member_num = info->world_id % info->group_size;
+	info->partner = info->world_id ^ (1<<(dimension-1));
 }
 
 /*

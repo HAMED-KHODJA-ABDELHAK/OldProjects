@@ -39,6 +39,16 @@ static char buf[BUF_SIZE];
 
 /****************** Global Functions **********************/
 
+/*
+ * Simple wrapper, acts as a multicast but only sends to members of a given subgroup.
+ * Only ever called by root of a group, send to all ids above sender below group size.
+ */
+void send_pivot(int pivot, const subgroup_info_t * const info) {
+	MPI_Request mpi_request;
+
+	for (int i = 1; i < info->group_size; ++i)
+		MPI_Isend(&pivot, 1, MPI_INT, info->world_id+i, SEND_TAG, MPI_COMM_WORLD, &mpi_request);
+}
 
 
 /*
@@ -50,18 +60,21 @@ int hyper_quicksort(const int dimension, const int id, int local[], int local_si
 		int recv[], int recv_size) {
 	MPI_Status mpi_status;
 	MPI_Request mpi_request;
-	subgroup_info_t info;
+	subgroup_info_t info = {0, 0, 0, 0, id};
 	int pivot = 0, lt_size = 0, gt_size = 0, received = 0;
 
 	/* Iterate for all dimensions of cube. */
 	for (int d = dimension-1; d >= 0; --d) {
 		/* Determine partner the group and member number of id, and its partner. */
-		lib_subgroup_info(d+1, id, &info);
+		lib_subgroup_info(d+1, &info);
 
-		/* Select and broadcast pivot. */
+		/* Select and broadcast pivot only to subgroup. */
 		if (info.member_num == 0) {
 			pivot = lib_select_pivot(local, local_size);
 			printf("ROUND: %d, GROUP: %d, pivot is: %d.\n", d, info.group_num, pivot);
+			send_pivot(pivot, &info);
+		} else {
+			MPI_Recv(&pivot, 1, MPI_INT, MPI_ANY_SOURCE, SEND_TAG, MPI_COMM_WORLD, &mpi_status);
 		}
 		//MPI_Bcast(&pivot, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
 		MPI_Barrier(MPI_COMM_WORLD);
