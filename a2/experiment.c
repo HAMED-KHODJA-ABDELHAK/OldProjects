@@ -39,11 +39,11 @@ void val_print(int vals[], int size) {
  */
 //int main(int argc, char **argv) {
 int main(void) {
-	int buf_size = 200, id = 2, ar_size = 5, ar[] = {20, 44, 1, 99, 7};
-	char buf[buf_size], tag[] = "TEST";
+	int dimension = 2, id = 6, group, member, partner;
 
-	lib_trace_array(buf, buf_size, tag, ar, ar_size, id);
-	printf("Expected: %s\n", buf);
+	lib_subgroup_info(dimension, id, &group, &member, &partner);
+	printf("I am member %d of group %d and my partner in COMM_WORLD is %d.\n",
+			member, group, partner);
 
 	return 0;
 }

@@ -43,21 +43,23 @@ static char buf[BUF_SIZE];
  * in MPI_COMM_WORLD. Details follow traditional hypercube algorithm seen on page 422 of Parallel Computing (Gupta).
  * At the end, each processor with local_size elements in local will be ready to locally sort.
  */
-void hyper_quicksort(const int dimension, const int id, const int root[], const int root_size,
-		int local[], int local_size, int recv[], int recv_size) {
+void hyper_quicksort(const int dimension, const int id, int local[], int local_size,
+		int recv[], int recv_size) {
 	MPI_Status mpi_status;
 	MPI_Request mpi_request;
-	int pivot = 0, lt_size = 0, gt_size = 0;
+	int pivot = 0, lt_size = 0, gt_size = 0, group = 0, member = 0, partner = 0;
 
 	/* Iterate for all dimensions of cube. */
 	for (int d = dimension-1; d >= 0; --d) {
-		/* Determine partner that is opposite this dimension of cube. Use xor to flip dth bit. */
-		int partner = id ^ (1<<d);
+		/* Determine partner the group and member number of id, and its partner. */
+		lib_subgroup_info(d+1, id, &group, &member, &partner);
 
 		/* Select and broadcast pivot. */
 		if (id == ROOT)
-			pivot = lib_select_pivot(root, root_size);
+			pivot = lib_select_pivot(local, local_size);
 		MPI_Bcast(&pivot, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
+
+		MPI_Barrier(MPI_COMM_WORLD);
 
 		/* Partition the array. */
 		lib_partition_array(pivot, local, local_size, &lt_size, &gt_size);
@@ -84,8 +86,6 @@ void hyper_quicksort(const int dimension, const int id, const int root[], const 
 			printf("ROUND %d.\n", d);
 		lib_trace_array(buf, BUF_SIZE, "HYPER:", local, local_size, id);
 		printf("%s", buf);
-
-		MPI_Barrier(MPI_COMM_WORLD);
 	}
 }
 
@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	/* Rearrange the cube so that we have roughly sorted data. */
-	hyper_quicksort(MAX_DIM, id, root, root_size, local, local_size, recv, recv_size);
+	hyper_quicksort(MAX_DIM, id, local, local_size, recv, recv_size);
 
 	/* Quicksort local array and then send back to root. */
 //	qsort(local, local_size, sizeof(int), lib_compare);

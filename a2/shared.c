@@ -176,12 +176,16 @@ int lib_power(const int base, const unsigned int exp) {
 /*
  * Returns true only if the id passed in is the root of the given subgroup domain.
  * The root of any given subgroup has d 0's starting from the right.
- * That basically means it is some modulo, I'll also return the subgroup.
+ * That basically means it is some modulo, I'll also return the subgroup and it's partner.
  */
-int lib_subgroup_root(const int dimension, const int id) {
+int lib_subgroup_info(const int dimension, const int id, int *group, int *member, int *partner) {
 	int val = lib_power(2, dimension);
 
-	return (id % val) == 0;
+	*member = id % val;
+	*group = id / val;
+	*partner = id ^ (1<<(dimension-1));
+
+	return id == 0;
 }
 
 /*

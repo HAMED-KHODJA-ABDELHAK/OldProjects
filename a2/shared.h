@@ -79,7 +79,7 @@ int lib_power(const int base, const unsigned int exp);
  * The root of any given subgroup has d 0's starting from the right.
  * That basically means it is some modulo, I'll also return the subgroup.
  */
-int lib_subgroup_root(const int dimension, const int id);
+int lib_subgroup_info(const int dimension, const int id, int *group, int *member, int *partner);
 
 /*
  * Function takes two arrays of passed size and merges them into array a.

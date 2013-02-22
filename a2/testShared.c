@@ -201,6 +201,20 @@ void test_trace_array(void) {
 	CU_ASSERT_STRING_EQUAL(buf, expected);
 }
 
+/*
+ * Test to exercise the array tracing function.
+ */
+void test_subgroup_info(void) {
+	int dimension = 2, id = 6, group = 0, member = 0, partner = 0;
+	int expected_group = 1, expected_member = 2, expected_partner = 4;
+
+	lib_subgroup_info(dimension, id, &group, &member, &partner);
+
+	CU_ASSERT(group == expected_group);
+	CU_ASSERT(member == expected_member);
+	CU_ASSERT(partner == expected_partner);
+}
+
 /* The main() function for setting up and running the tests.
  * Returns a CUE_SUCCESS on successful running, another
  * CUnit error code on failure.
@@ -232,7 +246,9 @@ int main() {
 	   (NULL == CU_add_test(sharedSuite, "Power Function, Odd", test_power_odd)) ||
 	   (NULL == CU_add_test(sharedSuite, "Partition Array", test_partition_array)) ||
 	   (NULL == CU_add_test(sharedSuite, "Array Union", test_array_union)) ||
-	   (NULL == CU_add_test(sharedSuite, "Array Trace", test_trace_array))
+	   (NULL == CU_add_test(sharedSuite, "Array Trace", test_trace_array)) ||
+	   (NULL == CU_add_test(sharedSuite, "Subgroup Info", test_subgroup_info))
+
       )
    {
       CU_cleanup_registry();
