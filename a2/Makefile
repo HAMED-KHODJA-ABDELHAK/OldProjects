@@ -15,7 +15,7 @@ RM:=@rm -rf
 CFLAGS:=-std=c99
 F_DEBUG:=-ggdb -Wall -Wextra -Winline -pedantic
 INCLUDE:=-I./cunit/include 
-LD_FLAGS:=-Wall -g -L./cunit/lib
+LD_FLAGS:=-L./cunit/lib
 
 # Library stuff, reduce duplication. Makes an archive of common code.
 AR:=ar -rf

@@ -37,7 +37,8 @@ void val_print(int vals[], int size) {
 /**
  * Main loop of the function.
  */
-int main(int argc, char **argv) {
+//int main(int argc, char **argv) {
+int main(void) {
 	int size = 10, array[size];
 
 	lib_generate_numbers(array, size);
