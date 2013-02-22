@@ -56,7 +56,7 @@ void lib_write_file(const char *filename, const int *vals, const int size);
  * Returns the pivot based on passed in array.
  * Currently: Median of three algorithm, select median of first, last and middle elements.
  */
-int lib_select_pivot(const int vals[], const int size);
+int lib_select_pivot(int vals[], const int size);
 
 /*
  * Simple swap function.

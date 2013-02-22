@@ -93,31 +93,32 @@ void lib_write_file(const char *filename, const int *vals, const int size) {
  * Returns the pivot based on passed in array.
  * Currently: Median of three algorithm, select median of first, last and middle elements.
  */
-int lib_select_pivot(const int vals[], const int size) {
-	const int start = 0, mid = size/2, end = size-1;
-	int large, small, pivot;
+int lib_select_pivot(int vals[], const int size) {
+//	const int start = 0, mid = size/2, end = size-1;
+//	int large, small, pivot;
 
-	/* Find the largest and smallest of first two. */
-	if (vals[start] > vals[mid]) {
-		large = start;
-		small = mid;
-	} else {
-		large = mid;
-		small = start;
-	}
+	qsort(vals, size, sizeof(int), lib_compare);
+	return vals[size/2];
 
-	/* If end greater than large it is median. Else determine middle of small and end. */
-	if (vals[end] > vals[large]) {
-		pivot = vals[large];
-	} else {
-		if (vals[end] > vals[small]) {
-			pivot = vals[end];
-		} else {
-			pivot = vals[small];
-		}
-	}
-
-	return pivot;
+//	/* Find the largest and smallest of first two. */
+//	if (vals[start] > vals[mid]) {
+//		large = start;
+//		small = mid;
+//	} else {
+//		large = mid;
+//		small = start;
+//	}
+//
+//	/* If end greater than large it is median. Else determine middle of small and end. */
+//	if (vals[end] > vals[large]) {
+//		pivot = vals[large];
+//	} else {
+//		if (vals[end] > vals[small]) {
+//			pivot = vals[end];
+//		} else {
+//			pivot = vals[small];
+//		}
+//	}
 }
 
 /*

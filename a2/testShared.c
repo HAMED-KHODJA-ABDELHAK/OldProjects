@@ -104,7 +104,7 @@ void test_select_pivot_odd(void) {
  * Test pivot selection, case where numbers are even.
  */
 void test_select_pivot_even(void) {
-	int test_data[] = {5, 9, 22, 99, 33, 2}, expected = 5;
+	int test_data[] = {5, 9, 22, 99, 33, 2}, expected = 22;
 	int selected = lib_select_pivot(test_data, sizeof(test_data)/sizeof(int));
 
 	CU_ASSERT(selected == expected);
