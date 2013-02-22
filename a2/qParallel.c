@@ -82,7 +82,7 @@ void hyper_quicksort(const int dimension, const int id, const int root[], const 
 
 		if (id == ROOT)
 			printf("ROUND %d.\n", d);
-		lib_trace_array(buf, BUF_SIZE, "SCATTER:", local, local_size, id);
+		lib_trace_array(buf, BUF_SIZE, "HYPER:", local, local_size, id);
 		printf("%s", buf);
 	}
 }
@@ -126,15 +126,18 @@ int main(int argc, char **argv) {
 		lib_read_file(INPUT, root, root_size);
 	}
 
-	/* Allocate a recv buf of size n/p and a local size of n/p. */
-	recv = (int *)malloc(num_proc * sizeof(int));
+	/* Allocate a recv buf of size 3*n/p and a local size of n/p.
+	 * The recv buf accounts for the fact that at most 3*n/p can be transferred if it
+	 * keeps all values in round 1 and 2 then transfers. */
+	recv = (int *)malloc(num_proc * 3 * sizeof(int));
 	if (recv == NULL)
 		lib_error("MAIN: Can't allocate recv array on heap.");
 
 	local = (int *)malloc(num_proc * sizeof(int));
 	if (local == NULL)
 		lib_error("MAIN: Can't allocate local array on heap.");
-	recv_size = local_size = num_proc;
+	local_size = num_proc;
+	recv_size = 3 * num_proc;
 
 	/* Scatter to across processes and then do hyper quicksort algorithm. */
 	MPI_Scatter(root, num_proc, MPI_INT, local, local_size, MPI_INT, 0, MPI_COMM_WORLD);
