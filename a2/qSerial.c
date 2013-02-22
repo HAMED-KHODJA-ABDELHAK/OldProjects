@@ -20,7 +20,7 @@
 
 /* Project Headers */
 #include "mpi.h"
-#include "mylib.h"
+#include "shared.h"
 
 /******************* Constants/Macros *********************/
 
@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
 	if (rank == ROOT) {
 
 		if (argc < 3)
-			m_error("MAIN: Error in usage, see notes in c file.");
+			lib_error("MAIN: Error in usage, see notes in c file.");
 
 		/* Get the work amount from command. */
 		num_vals = atoi(*++argv);
@@ -62,20 +62,20 @@ int main(int argc, char **argv) {
 		/* Allocate it on the heap, large amount of memory likely wouldn't fit on stack. */
 		vals = (int *)malloc(num_vals * sizeof(int));
 		if (vals == NULL)
-			m_error("MAIN: Can't allocate vals array on heap.");
+			lib_error("MAIN: Can't allocate vals array on heap.");
 
 		/* If requested, generate new input file. */
 		if (strcmp(*++argv, GENERATE_FLAG) == 0) {
-			gen_input(vals, num_vals);
-			write_file(INPUT, vals, num_vals);
+			lib_generate_numbers(vals, num_vals);
+			lib_write_file(INPUT, vals, num_vals);
 		}
 
 		/* Read back input from file into array on heap. */
-		read_file(INPUT, vals, num_vals);
+		lib_read_file(INPUT, vals, num_vals);
 
 		/* Sort and output to file. */
-		qsort(vals, num_vals, sizeof(int), compare);
-		write_file(OUTPUT, vals, num_vals);
+		qsort(vals, num_vals, sizeof(int), lib_compare);
+		lib_write_file(OUTPUT, vals, num_vals);
 
 		free(vals);
 		printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);

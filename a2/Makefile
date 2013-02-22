@@ -3,7 +3,7 @@
 # Use "make clean" to remove all built exes. Warning, also removes input/output due to large size.
 
 # Declaration to make these phoney targets, means not dependent on files.
-.PHONY: all clean test
+.PHONY: all clean
 
 # Dirs for src and build artifacts. There must be a demo directory to build exes.
 SRC_DIR=.
@@ -20,7 +20,7 @@ LD_FLAGS:=-Wall -g -L./cunit/lib
 # Library stuff, reduce duplication. Makes an archive of common code.
 AR:=ar -rf
 RANLIB:=ranlib
-LIB_NAME:=mylib.a #Name only.
+LIB_NAME:=shared.a #Name only.
 LIB_ARC:=$(EXE_DIR)/$(LIB_NAME) #Final directory + name.
 LIB_OBJS:=$(subst .a,.o,$(LIB_NAME)) # Objects required.
 LIBS:=$(LIB_ARC) -lcunit
@@ -33,7 +33,7 @@ EXES = \
 	$(EXE_DIR)/qSerial \
 	$(EXE_DIR)/qParallel \
 	$(EXE_DIR)/experiment \
-	$(EXE_DIR)/testQParallel \
+	$(EXE_DIR)/testShared \
 
 # Custom rules, define how to link and compile respectively.
 $(EXE_DIR)/%: %.o 
