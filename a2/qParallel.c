@@ -55,14 +55,18 @@ void hyper_quicksort(const int dimension, const int id, int local[], int local_s
 		lib_subgroup_info(d+1, id, &group, &member, &partner);
 
 		/* Select and broadcast pivot. */
-		if (id == ROOT)
+		if (id == ROOT) {
 			pivot = lib_select_pivot(local, local_size);
+			printf("PP: Pivot is: %d.\n", pivot);
+		}
 		MPI_Bcast(&pivot, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
 
-		MPI_Barrier(MPI_COMM_WORLD);
 
 		/* Partition the array. */
 		lib_partition_array(pivot, local, local_size, &lt_size, &gt_size);
+		lib_trace_array(buf, BUF_SIZE, "PARTITIONED:", local, local_size, id);
+		printf("%s", buf);
+		MPI_Barrier(MPI_COMM_WORLD);
 
 		/* Determine position in the cube. If below is true, I am in upper. */
 		if (id & (1<<d)) {
@@ -81,6 +85,15 @@ void hyper_quicksort(const int dimension, const int id, int local[], int local_s
 		/* Get the received count and call array union function to merge into local. */
 		MPI_Get_count(&mpi_status, MPI_INT, &recv_size);
 		lib_array_union(&local, &local_size, recv, recv_size);
+
+		lib_trace_array(buf, BUF_SIZE, "RECV:", recv, recv_size, id);
+		printf("%s", buf);
+		MPI_Barrier(MPI_COMM_WORLD);
+
+		lib_trace_array(buf, BUF_SIZE, "PARTITIONED:", local, local_size, id);
+		printf("%s", buf);
+		MPI_Barrier(MPI_COMM_WORLD);
+
 
 		if (id == ROOT)
 			printf("ROUND %d.\n", d);
