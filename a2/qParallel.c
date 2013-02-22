@@ -84,6 +84,8 @@ void hyper_quicksort(const int dimension, const int id, const int root[], const 
 			printf("ROUND %d.\n", d);
 		lib_trace_array(buf, BUF_SIZE, "HYPER:", local, local_size, id);
 		printf("%s", buf);
+
+		MPI_Barrier(MPI_COMM_WORLD);
 	}
 }
 
@@ -143,6 +145,8 @@ int main(int argc, char **argv) {
 	MPI_Scatter(root, num_proc, MPI_INT, local, local_size, MPI_INT, 0, MPI_COMM_WORLD);
 	lib_trace_array(buf, BUF_SIZE, "SCATTER:", local, local_size, id);
 	printf("%s", buf);
+
+	MPI_Barrier(MPI_COMM_WORLD);
 
 	/* Rearrange the cube so that we have roughly sorted data. */
 	hyper_quicksort(MAX_DIM, id, root, root_size, local, local_size, recv, recv_size);
