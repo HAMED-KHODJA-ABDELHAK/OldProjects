@@ -50,14 +50,13 @@ void send_pivot(int pivot, const subgroup_info_t * const info) {
 		MPI_Isend(&pivot, 1, MPI_INT, info->world_id+i, SEND_TAG, MPI_COMM_WORLD, &mpi_request);
 }
 
-
 /*
  * Implementation of the hyper quicksort for any given dimension. Topology is assumed to be entirely
  * in MPI_COMM_WORLD. Details follow traditional hypercube algorithm seen on page 422 of Parallel Computing (Gupta).
  * At the end, each processor with local_size elements in local will be ready to locally sort.
  */
 int hyper_quicksort(const int dimension, const int id, int local[], int local_size,
-		int recv[], int recv_size) {
+		int recv[], const int recv_size) {
 	MPI_Status mpi_status;
 	MPI_Request mpi_request;
 	subgroup_info_t info = {0, 0, 0, 0, id};
@@ -65,7 +64,7 @@ int hyper_quicksort(const int dimension, const int id, int local[], int local_si
 
 	/* Iterate for all dimensions of cube. */
 	for (int d = dimension-1; d >= 0; --d) {
-		/* Determine partner the group and member number of id, and its partner. */
+		/* Determine the group and member number of id, and its partner. */
 		lib_subgroup_info(d+1, &info);
 
 		/* Select and broadcast pivot only to subgroup. */
@@ -76,7 +75,6 @@ int hyper_quicksort(const int dimension, const int id, int local[], int local_si
 		} else {
 			MPI_Recv(&pivot, 1, MPI_INT, MPI_ANY_SOURCE, SEND_TAG, MPI_COMM_WORLD, &mpi_status);
 		}
-		//MPI_Bcast(&pivot, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
 		MPI_Barrier(MPI_COMM_WORLD);
 
 		/* Partition the array. */
@@ -177,9 +175,9 @@ int main(int argc, char **argv) {
 	/* Rearrange the cube so that we have roughly sorted data. */
 	local_size = hyper_quicksort(MAX_DIM, id, local, local_size, recv, recv_size);
 
-	/* Quicksort local array and then send back to root. */
-	qsort(local, local_size, sizeof(int), lib_compare);
-	MPI_Gather(local, local_size, MPI_INT, root, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
+//	/* Quicksort local array and then send back to root. */
+//	qsort(local, local_size, sizeof(int), lib_compare);
+//	MPI_Gather(local, local_size, MPI_INT, root, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
 
 	/* Last step, root has result write to output the sorted array. */
 	if (id == ROOT) {
