@@ -205,14 +205,16 @@ void test_trace_array(void) {
  * Test to exercise the array tracing function.
  */
 void test_subgroup_info(void) {
-	int dimension = 2, id = 6, group = 0, member = 0, partner = 0;
-	int expected_group = 1, expected_member = 2, expected_partner = 4;
+	int dimension = 2, id = 6;
+	subgroup_info_t actual, expected = {4, 1, 2, 4};
+	memset(&actual, '\0', sizeof(subgroup_info_t));
 
-	lib_subgroup_info(dimension, id, &group, &member, &partner);
+	lib_subgroup_info(dimension, id, &actual);
 
-	CU_ASSERT(group == expected_group);
-	CU_ASSERT(member == expected_member);
-	CU_ASSERT(partner == expected_partner);
+	CU_ASSERT(actual.group_num == expected.group_num);
+	CU_ASSERT(actual.member_num == expected.member_num);
+	CU_ASSERT(actual.partner == expected.partner);
+	CU_ASSERT(actual.group_size == expected.group_size);
 }
 
 /* The main() function for setting up and running the tests.

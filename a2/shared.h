@@ -22,7 +22,12 @@
 #define SEND_TAG 		0
 
 /******************* Type Declarations ********************/
-
+typedef struct subgroup_info_s {
+     int group_size;
+     int group_num;
+     int member_num;
+     int partner;
+} subgroup_info_t;
 
 /********************** Prototypes ************************/
 
@@ -79,7 +84,7 @@ int lib_power(const int base, const unsigned int exp);
  * The root of any given subgroup has d 0's starting from the right.
  * That basically means it is some modulo, I'll also return the subgroup.
  */
-int lib_subgroup_info(const int dimension, const int id, int *group, int *member, int *partner);
+void lib_subgroup_info(const int dimension, const int id, subgroup_info_t *info);
 
 /*
  * Function takes two arrays of passed size and merges them into array a.

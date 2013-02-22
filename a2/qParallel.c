@@ -38,6 +38,9 @@ static char buf[BUF_SIZE];
 
 
 /****************** Global Functions **********************/
+
+
+
 /*
  * Implementation of the hyper quicksort for any given dimension. Topology is assumed to be entirely
  * in MPI_COMM_WORLD. Details follow traditional hypercube algorithm seen on page 422 of Parallel Computing (Gupta).
@@ -47,19 +50,20 @@ int hyper_quicksort(const int dimension, const int id, int local[], int local_si
 		int recv[], int recv_size) {
 	MPI_Status mpi_status;
 	MPI_Request mpi_request;
-	int pivot = 0, lt_size = 0, gt_size = 0, group = 0, member = 0, partner = 0, received = 0;
+	subgroup_info_t info;
+	int pivot = 0, lt_size = 0, gt_size = 0, received = 0;
 
 	/* Iterate for all dimensions of cube. */
 	for (int d = dimension-1; d >= 0; --d) {
 		/* Determine partner the group and member number of id, and its partner. */
-		lib_subgroup_info(d+1, id, &group, &member, &partner);
+		lib_subgroup_info(d+1, id, &info);
 
 		/* Select and broadcast pivot. */
-		if (id == ROOT) {
+		if (info.member_num == 0) {
 			pivot = lib_select_pivot(local, local_size);
-			printf("ROUND: %d, pivot is: %d.\n", d, pivot);
+			printf("ROUND: %d, GROUP: %d, pivot is: %d.\n", d, info.group_num, pivot);
 		}
-		MPI_Bcast(&pivot, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
+		//MPI_Bcast(&pivot, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
 		MPI_Barrier(MPI_COMM_WORLD);
 
 		/* Partition the array. */
@@ -68,16 +72,16 @@ int hyper_quicksort(const int dimension, const int id, int local[], int local_si
 		printf("%s", buf);
 		MPI_Barrier(MPI_COMM_WORLD);
 
-		/* Determine position in the cube. If below is true, I am in upper. */
+		/* Determine position in the cube. If below is true, I am in upper part of this dimension. */
 		if (id & (1<<d)) {
-			MPI_Isend(local, lt_size, MPI_INT, partner, SEND_TAG, MPI_COMM_WORLD, &mpi_request);
-			MPI_Recv(recv, recv_size, MPI_INT, partner, SEND_TAG, MPI_COMM_WORLD, &mpi_status);
+			MPI_Isend(local, lt_size, MPI_INT, info.partner, SEND_TAG, MPI_COMM_WORLD, &mpi_request);
+			MPI_Recv(recv, recv_size, MPI_INT, info.partner, SEND_TAG, MPI_COMM_WORLD, &mpi_status);
 			/* We have sent lower portion, move elements greater down. Update local_size.*/
 			memmove(local, local+lt_size, gt_size*sizeof(int));
 			local_size = gt_size;
 		} else {
-			MPI_Isend(local+lt_size, gt_size, MPI_INT, partner, SEND_TAG, MPI_COMM_WORLD, &mpi_request);
-			MPI_Recv(recv, recv_size, MPI_INT, partner, SEND_TAG, MPI_COMM_WORLD, &mpi_status);
+			MPI_Isend(local+lt_size, gt_size, MPI_INT, info.partner, SEND_TAG, MPI_COMM_WORLD, &mpi_request);
+			MPI_Recv(recv, recv_size, MPI_INT, info.partner, SEND_TAG, MPI_COMM_WORLD, &mpi_status);
 			/* We have sent upper portion of array, merely update size and ignore older elements. */
 			local_size = lt_size;
 		}
@@ -140,15 +144,14 @@ int main(int argc, char **argv) {
 	/* Allocate a recv buf of size 3*n/p and a local size of n/p.
 	 * The recv buf accounts for the fact that at most 3*n/p can be transferred if it
 	 * keeps all values in round 1 and 2 then transfers. */
-	recv = (int *)malloc(num_proc * 3 * sizeof(int));
+	recv = (int *)malloc(root_size* sizeof(int));
 	if (recv == NULL)
 		lib_error("MAIN: Can't allocate recv array on heap.");
 
-	local = (int *)malloc(num_proc * sizeof(int));
+	local = (int *)malloc(root_size * sizeof(int));
 	if (local == NULL)
 		lib_error("MAIN: Can't allocate local array on heap.");
-	local_size = num_proc;
-	recv_size = 3 * num_proc;
+	local_size = recv_size = root_size;
 
 	/* Scatter to across processes and then do hyper quicksort algorithm. */
 	MPI_Scatter(root, num_proc, MPI_INT, local, local_size, MPI_INT, 0, MPI_COMM_WORLD);

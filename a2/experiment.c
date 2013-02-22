@@ -62,11 +62,6 @@ void val_print(int vals[], int size) {
  */
 //int main(int argc, char **argv) {
 int main(void) {
-	int dimension = 2, id = 6, group, member, partner;
-
-	lib_subgroup_info(dimension, id, &group, &member, &partner);
-	printf("I am member %d of group %d and my partner in COMM_WORLD is %d.\n",
-			member, group, partner);
 
 	return 0;
 }
