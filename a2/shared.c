@@ -192,17 +192,21 @@ void lib_subgroup_info(const int dimension, subgroup_info_t *info) {
  */
 void lib_array_union(int *a[], int *a_size, const int b[], const int b_size) {
 	/* New array of combined size, then copy in the contents of a and b. */
-	int *temp = malloc((*a_size + b_size) * sizeof(int));
-	if (temp == NULL)
-		lib_error("LIB_ARRAY_UNION: Unable to allocate new array.");
+	int new_size = *a_size + b_size, *temp = NULL;
 
-	memcpy(temp, *a, (*a_size)*sizeof(int));
-	memcpy(temp+(*a_size), b, b_size*sizeof(int));
+	/* Don't bother if new size is 0. */
+	if (new_size != 0) {
+		/* Malloc the new array and copy in vals from a and b. */
+		temp = malloc(new_size * sizeof(int));
+		memcpy(temp, *a, (*a_size)*sizeof(int));
+		memcpy(temp+(*a_size), b, b_size*sizeof(int));
 
-	/* Free old a array. Then update pointer and size. */
-	free(*a);
-	*a = temp;
-	*a_size += b_size;
+		/* Free old a array. Then update pointer and size. */
+		if (*a != NULL)
+			free(*a);
+		*a = temp;
+		*a_size = new_size;
+	}
 }
 
 /*

@@ -188,8 +188,9 @@ int main(int argc, char **argv) {
 		free(root);
 	}
 
-	free(local);
 	free(recv);
+	if (local != NULL)
+		free(local);
 
 	MPI_Finalize();
 
