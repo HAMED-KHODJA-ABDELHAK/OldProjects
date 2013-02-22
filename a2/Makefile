@@ -23,7 +23,7 @@ RANLIB:=ranlib
 LIB_NAME:=shared.a #Name only.
 LIB_ARC:=$(EXE_DIR)/$(LIB_NAME) #Final directory + name.
 LIB_OBJS:=$(subst .a,.o,$(LIB_NAME)) # Objects required.
-LIBS:=$(LIB_ARC) -lcunit
+LIBS:=$(LIB_ARC) ./cunit/lib/libcunit.a 
 
 # Generic files to clean.
 FILES_TO_CLEAN:=*.o *.a *.out *.exe *~ temp.* *.gcov *.gcda *.gcno
