@@ -90,7 +90,7 @@ void hyper_quicksort(const int dimension, const int id, int local[], int local_s
 		printf("%s", buf);
 		MPI_Barrier(MPI_COMM_WORLD);
 
-		lib_trace_array(buf, BUF_SIZE, "PARTITIONED:", local, local_size, id);
+		lib_trace_array(buf, BUF_SIZE, "UNION:", local, local_size, id);
 		printf("%s", buf);
 		MPI_Barrier(MPI_COMM_WORLD);
 
