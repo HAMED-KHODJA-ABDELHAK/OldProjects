@@ -57,10 +57,10 @@ void hyper_quicksort(const int dimension, const int id, int local[], int local_s
 		/* Select and broadcast pivot. */
 		if (id == ROOT) {
 			pivot = lib_select_pivot(local, local_size);
-			printf("PP: Pivot is: %d.\n", pivot);
+			printf("ROUND: %d, pivot is: %d.\n", d, pivot);
 		}
 		MPI_Bcast(&pivot, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
-
+		MPI_Barrier(MPI_COMM_WORLD);
 
 		/* Partition the array. */
 		lib_partition_array(pivot, local, local_size, &lt_size, &gt_size);
@@ -93,12 +93,6 @@ void hyper_quicksort(const int dimension, const int id, int local[], int local_s
 		lib_trace_array(buf, BUF_SIZE, "UNION:", local, local_size, id);
 		printf("%s", buf);
 		MPI_Barrier(MPI_COMM_WORLD);
-
-
-		if (id == ROOT)
-			printf("ROUND %d.\n", d);
-		lib_trace_array(buf, BUF_SIZE, "HYPER:", local, local_size, id);
-		printf("%s", buf);
 	}
 }
 
