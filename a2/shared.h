@@ -13,7 +13,7 @@
 /* Flag to pass in to generate new input.txt */
 #define GENERATE_FLAG 	"gen"
 /* Max value of randomly generated numbers */
-#define MAX_VAL 		100
+#define MAX_VAL 		1000
 /* Root ID */
 #define ROOT 			0
 /* Maximum dimension of the hypercube */
@@ -86,6 +86,11 @@ int lib_subgroup_root(const int dimension, const int id);
  * Assumes that a is in fact a malloced array that can be freed.
  */
 void lib_array_union(int *a[], int *a_size, const int b[], const int b_size);
+
+/*
+ * Tracing function, takes a buffer of adequate size and traces the values in array.
+ */
+void lib_trace_array(char *buf, int buf_size, char *tag, int array[], int size, int id, int world);
 
 #endif /* _SHARED_H_ */
 

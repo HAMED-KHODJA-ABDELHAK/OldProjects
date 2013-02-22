@@ -86,7 +86,7 @@ void test_read_write_file(void) {
 	lib_read_file(TEMP_FILE, read, AR_SIZE);
 
 	for (int i = 0; i < AR_SIZE; ++i) {
-		CU_ASSERT(gen[i] == read[i])
+		CU_ASSERT(gen[i] == read[i]);
 	}
 }
 
@@ -190,6 +190,17 @@ void test_array_union(void) {
 	free(right);
 }
 
+/*
+ * Test to exercise the array tracing function.
+ */
+void test_trace_array(void) {
+	int buf_size = 200, id = 2, world = 4, ar_size = 5, ar[] = {20, 44, 1, 99, 7};
+	char buf[buf_size], tag[] = "TEST", expected[] = "TEST: I am 2 of 4. I have numbers: 20 44 1 99 7 \n";
+
+	lib_trace_array(buf, buf_size, tag, ar, ar_size, id, world);
+	CU_ASSERT_STRING_EQUAL(buf, expected);
+}
+
 /* The main() function for setting up and running the tests.
  * Returns a CUE_SUCCESS on successful running, another
  * CUnit error code on failure.
@@ -202,7 +213,7 @@ int main() {
       return CU_get_error();
 
    /* Add a suite to the registry. */
-   sharedSuite = CU_add_suite("Suite_1", suite_init, suite_clean);
+   sharedSuite = CU_add_suite("Shared Suite", suite_init, suite_clean);
    if (NULL == sharedSuite) {
       CU_cleanup_registry();
       return CU_get_error();
@@ -210,17 +221,18 @@ int main() {
 
    /* Add the tests to the suite. */
    if (
-	   (NULL == CU_add_test(sharedSuite, "Shared: Compare: Equal", test_compare_equal)) ||
-	   (NULL == CU_add_test(sharedSuite, "Shared: Compare: Less", test_compare_less)) ||
-	   (NULL == CU_add_test(sharedSuite, "Shared: Compare: Greater", test_compare_more)) ||
-	   (NULL == CU_add_test(sharedSuite, "Shared: Write/Read", test_read_write_file)) ||
-	   (NULL == CU_add_test(sharedSuite, "Shared: Select Pivot, Odd", test_select_pivot_odd)) ||
-	   (NULL == CU_add_test(sharedSuite, "Shared: Select Pivot, Even", test_select_pivot_even)) ||
-	   (NULL == CU_add_test(sharedSuite, "Shared: Swap Ints", test_swap_ints)) ||
-	   (NULL == CU_add_test(sharedSuite, "Shared: Power Function, Even", test_power_even)) ||
-	   (NULL == CU_add_test(sharedSuite, "Shared: Power Function, Odd", test_power_odd)) ||
-	   (NULL == CU_add_test(sharedSuite, "Shared: Partition Array", test_partition_array)) ||
-	   (NULL == CU_add_test(sharedSuite, "Shared: Array Union", test_array_union))
+	   (NULL == CU_add_test(sharedSuite, "Compare: Equal", test_compare_equal)) ||
+	   (NULL == CU_add_test(sharedSuite, "Compare: Less", test_compare_less)) ||
+	   (NULL == CU_add_test(sharedSuite, "Compare: Greater", test_compare_more)) ||
+	   (NULL == CU_add_test(sharedSuite, "Write/Read", test_read_write_file)) ||
+	   (NULL == CU_add_test(sharedSuite, "Select Pivot, Odd", test_select_pivot_odd)) ||
+	   (NULL == CU_add_test(sharedSuite, "Select Pivot, Even", test_select_pivot_even)) ||
+	   (NULL == CU_add_test(sharedSuite, "Swap Ints", test_swap_ints)) ||
+	   (NULL == CU_add_test(sharedSuite, "Power Function, Even", test_power_even)) ||
+	   (NULL == CU_add_test(sharedSuite, "Power Function, Odd", test_power_odd)) ||
+	   (NULL == CU_add_test(sharedSuite, "Partition Array", test_partition_array)) ||
+	   (NULL == CU_add_test(sharedSuite, "Array Union", test_array_union)) ||
+	   (NULL == CU_add_test(sharedSuite, "Array Trace", test_trace_array))
       )
    {
       CU_cleanup_registry();

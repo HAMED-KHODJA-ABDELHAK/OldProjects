@@ -23,13 +23,13 @@
 #include "shared.h"
 
 /******************* Constants/Macros *********************/
-
+#define BUF_SIZE 1000
 
 /******************* Type Definitions *********************/
 
 
 /**************** Static Data Definitions *****************/
-
+static char buf[BUF_SIZE];
 
 /****************** Static Functions **********************/
 
@@ -96,15 +96,16 @@ int main(int argc, char **argv) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &id);
 	MPI_Comm_size(MPI_COMM_WORLD, &world);
 
+	/* Protection. */
+	if (argc < 3)
+		lib_error("MAIN: Bad usage, see top of respective c file.");
+
 	/* Get the work amount from command for each process. */
 	num_proc = atoi(*++argv);
 	root_size = num_proc * world;
 
 	/* Root only work, ensure good usage and proper input. */
 	if (id == ROOT) {
-		if (argc < 3)
-			lib_error("MAIN: Bad usage, see top of respective c file.");
-
 		/* Allocate the whole array on the heap, large amount of memory likely wouldn't fit on stack. */
 		root = (int *)malloc(root_size * sizeof(int));
 		if (root == NULL)
@@ -120,20 +121,24 @@ int main(int argc, char **argv) {
 		lib_read_file(INPUT, root, root_size);
 	}
 
-	/* Allocate a recv buf of size n/p and a local size of 4*n/p (max case where receives all elements in 3 exchanges). */
+	/* Allocate a recv buf of size n/p and a local size of n/p. */
 	recv = (int *)malloc(num_proc * sizeof(int));
 	if (recv == NULL)
 		lib_error("MAIN: Can't allocate recv array on heap.");
 
-	local = (int *)malloc(num_proc * 4 * sizeof(int));
+	local = (int *)malloc(num_proc * sizeof(int));
 	if (local == NULL)
 		lib_error("MAIN: Can't allocate local array on heap.");
+	local_size = num_proc;
 
 	/* Scatter to across processes and then do hyper quicksort algorithm. */
-	MPI_Scatter(root, num_proc, MPI_INT, local, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Scatter(root, num_proc, MPI_INT, local, local_size, MPI_INT, 0, MPI_COMM_WORLD);
+	lib_trace_array(buf, BUF_SIZE, "MAIN", local, local_size, id, world);
+	printf("%s", buf);
+	exit(1);
 
-	/* Rearrange the cube so that we have roughly sorted data. */
-	hyper_quicksort(MAX_DIM, id, root, root_size, local, local_size, recv, recv_size);
+//	/* Rearrange the cube so that we have roughly sorted data. */
+//	hyper_quicksort(MAX_DIM, id, root, root_size, local, local_size, recv, recv_size);
 
 	/* Quicksort local array and then send back to root. */
 	qsort(local, local_size, sizeof(int), lib_compare);

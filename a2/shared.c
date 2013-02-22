@@ -191,6 +191,9 @@ int lib_subgroup_root(const int dimension, const int id) {
 void lib_array_union(int *a[], int *a_size, const int b[], const int b_size) {
 	/* New array of combined size, then copy in the contents of a and b. */
 	int *temp = malloc((*a_size + b_size) * sizeof(int));
+	if (temp == NULL)
+		lib_error("LIB_ARRAY_UNION: Unable to allocate new array.");
+
 	memcpy(temp, *a, (*a_size)*sizeof(int));
 	memcpy(temp+(*a_size), b, b_size*sizeof(int));
 
@@ -198,4 +201,29 @@ void lib_array_union(int *a[], int *a_size, const int b[], const int b_size) {
 	free(*a);
 	*a = temp;
 	*a_size += b_size;
+}
+
+/*
+ * Tracing function, takes a buffer of adequate size and traces the values in array.
+ */
+void lib_trace_array(char *buf, int buf_size, char *tag, int array[], int size, int id, int world) {
+	int count;
+
+	/* Using snprintf to avoid overflowing the buffer if too small. */
+	count = snprintf(buf, buf_size, "%s: I am %d of %d. I have numbers: ", tag, id, world);
+	if ((buf_size - count) < 1)
+		lib_error("LIB_TRACE: Insufficient buffer for print.");
+
+	for (int i = 0; i < size; ++i) {
+		count += snprintf(buf+count, buf_size-count, "%d ", array[i]);
+		if ((buf_size-count) < 1)
+			lib_error("LIB_TRACE: Insufficient buffer for print.");
+	}
+
+	count += snprintf(buf+count, buf_size-count, "\n");
+	if ((buf_size-count) < 1)
+		lib_error("LIB_TRACE: Insufficient buffer for print.");
+
+	/* Ensure always null terminated, only catches if buffer too small. */
+	buf[buf_size-1] = '\0';
 }
