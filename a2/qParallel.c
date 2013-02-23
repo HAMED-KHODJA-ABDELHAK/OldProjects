@@ -55,7 +55,7 @@ void send_pivot(int pivot, const subgroup_info_t * const info) {
  * in MPI_COMM_WORLD. Details follow traditional hypercube algorithm seen on page 422 of Parallel Computing (Gupta).
  * At the end, each processor with local_size elements in local will be ready to locally sort.
  */
-int hyper_quicksort(const int dimension, const int id, int local[], int local_size,
+void hyper_quicksort(const int dimension, const int id, int *local[], int *local_size,
 		int recv[], const int recv_size) {
 	MPI_Status mpi_status;
 	MPI_Request mpi_request;
@@ -69,7 +69,7 @@ int hyper_quicksort(const int dimension, const int id, int local[], int local_si
 
 		/* Select and broadcast pivot only to subgroup. */
 		if (info.member_num == 0) {
-			pivot = lib_select_pivot(local, local_size);
+			pivot = lib_select_pivot(*local, *local_size);
 			printf("ROUND: %d, GROUP: %d, pivot is: %d.\n", d, info.group_num, pivot);
 			send_pivot(pivot, &info);
 		} else {
@@ -78,8 +78,8 @@ int hyper_quicksort(const int dimension, const int id, int local[], int local_si
 		MPI_Barrier(MPI_COMM_WORLD);
 
 		/* Partition the array. */
-		lib_partition_array(pivot, local, local_size, &lt_size, &gt_size);
-		lib_trace_array(buf, BUF_SIZE, "PARTITIONED:", local, local_size, id);
+		lib_partition_array(pivot, *local, *local_size, &lt_size, &gt_size);
+		lib_trace_array(buf, BUF_SIZE, "PARTITIONED:", *local, *local_size, id);
 		printf("%s", buf);
 		MPI_Barrier(MPI_COMM_WORLD);
 
@@ -89,28 +89,26 @@ int hyper_quicksort(const int dimension, const int id, int local[], int local_si
 			MPI_Recv(recv, recv_size, MPI_INT, info.partner, SEND_TAG, MPI_COMM_WORLD, &mpi_status);
 			/* We have sent lower portion, move elements greater down. Update local_size.*/
 			memmove(local, local+lt_size, gt_size*sizeof(int));
-			local_size = gt_size;
+			*local_size = gt_size;
 		} else {
 			MPI_Isend(local+lt_size, gt_size, MPI_INT, info.partner, SEND_TAG, MPI_COMM_WORLD, &mpi_request);
 			MPI_Recv(recv, recv_size, MPI_INT, info.partner, SEND_TAG, MPI_COMM_WORLD, &mpi_status);
 			/* We have sent upper portion of array, merely update size and ignore older elements. */
-			local_size = lt_size;
+			*local_size = lt_size;
 		}
 
 		/* Get the received count and call array union function to merge into local. */
 		MPI_Get_count(&mpi_status, MPI_INT, &received);
-		lib_array_union(&local, &local_size, recv, received);
+		lib_array_union(local, local_size, recv, received);
 
 		lib_trace_array(buf, BUF_SIZE, "RECV:", recv, received, id);
 		printf("%s", buf);
 		MPI_Barrier(MPI_COMM_WORLD);
 
-		lib_trace_array(buf, BUF_SIZE, "UNION:", local, local_size, id);
+		lib_trace_array(buf, BUF_SIZE, "UNION:", *local, *local_size, id);
 		printf("%s", buf);
 		MPI_Barrier(MPI_COMM_WORLD);
 	}
-
-	return local_size;
 }
 
 /*
@@ -173,10 +171,15 @@ int main(int argc, char **argv) {
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	/* Rearrange the cube so that we have roughly sorted data. */
-	local_size = hyper_quicksort(MAX_DIM, id, local, local_size, recv, recv_size);
+	hyper_quicksort(MAX_DIM, id, &local, &local_size, recv, recv_size);
 
-//	/* Quicksort local array and then send back to root. */
-//	qsort(local, local_size, sizeof(int), lib_compare);
+	MPI_Barrier(MPI_COMM_WORLD);
+	lib_trace_array(buf, BUF_SIZE, "AFTERHYPER:", local, local_size, id);
+	printf("%s", buf);
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	/* Quicksort local array and then send back to root. */
+	//qsort(local, local_size, sizeof(int), lib_compare);
 //	MPI_Gather(local, local_size, MPI_INT, root, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
 
 	/* Last step, root has result write to output the sorted array. */
