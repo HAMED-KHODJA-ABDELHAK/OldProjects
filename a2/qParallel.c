@@ -208,7 +208,7 @@ int main(int argc, char **argv) {
 	qsort(local, local_size, sizeof(int), lib_compare);
 	MPI_Gather(local, local_size, MPI_INT, root, 2*num_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
 
-	/* Last step, root has result write to output the sorted array. */
+	/* Last step, root has to compress array due to uneven nature after gather. Then write to file. */
 	if (id == ROOT) {
 		lib_compress_array(world, root, root_size);
 
