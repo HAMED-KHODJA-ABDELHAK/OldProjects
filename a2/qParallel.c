@@ -206,14 +206,15 @@ int main(int argc, char **argv) {
 	qsort(local, local_size, sizeof(int), lib_compare);
 	MPI_Gather(local, local_size, MPI_INT, root, 2*num_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
 
-#ifdef QDEBUG
-	if (id == ROOT) {
-		lib_trace_array(buf, BUF_SIZE, "GATHER", root, root_size, id);
-		printf("%s", buf);
-	}
-#endif
 	/* Last step, root has result write to output the sorted array. */
 	if (id == ROOT) {
+		lib_compress_array(world, root, root_size);
+
+#ifdef QDEBUG
+		lib_trace_array(buf, BUF_SIZE, "GATHER", root, root_size, id);
+		printf("%s", buf);
+#endif
+
 		lib_write_file(OUTPUT, root, root_size);
 		printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
 		free(root);

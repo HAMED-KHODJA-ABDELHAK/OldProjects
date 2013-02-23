@@ -217,18 +217,15 @@ void test_subgroup_info(void) {
 }
 
 /*
- * Test to exercise the array tracing function.
+ * Test to exercise the array compressing function.
  */
 void test_compress_array(void) {
-	int dimension = 2, id = 6;
-	subgroup_info_t actual = {0, 0, 0 ,0, id}, expected = {4, 1, 2, 4, id};
+	int world = 3, vals_size = 60, vals[] = {1, 2, 4, 4, 4, 10, 11, 11, 13, 13, 13, -1, -1, -1, -1, -1, -1, -1, -1, -1, 16, 18, 18, 18, 20, 21, 24, 25, 25, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 27, 28, 28, 28, 31, 32, 33, 33, 34, 34, 35, 37, 39, 39, 43, 45, -1, -1, -1, -1};
 
-	lib_subgroup_info(dimension, &actual);
+	lib_compress_array(world, vals, vals_size);
 
-	CU_ASSERT(actual.group_num == expected.group_num);
-	CU_ASSERT(actual.member_num == expected.member_num);
-	CU_ASSERT(actual.partner == expected.partner);
-	CU_ASSERT(actual.group_size == expected.group_size);
+	for (int i = 0; i < vals_size/2; ++i)
+		CU_ASSERT(vals[i] != -1);
 }
 
 /* The main() function for setting up and running the tests.

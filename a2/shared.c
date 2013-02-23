@@ -238,7 +238,8 @@ void lib_trace_array(char *buf, int buf_size, char *tag, int array[], int size, 
  * Once gathered, root array contains a lot of empty values as -1.
  * Compress down array to be contiguous.
  */
-void lib_compress_array(int world, int offset, int root[], int root_size) {
+void lib_compress_array(int world, int root[], int root_size) {
+	int offset = root_size/world;
 	int *left = root, *right = root+1;
 
 	for (int i = 0; i < world; ++i) {
