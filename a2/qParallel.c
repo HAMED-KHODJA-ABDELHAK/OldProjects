@@ -196,10 +196,12 @@ int main(int argc, char **argv) {
 	 * Set values to -1.
 	 */
 	if (id == ROOT) {
-		root = (int *)malloc(root_size * 2 * sizeof(int));
+		free(root);
+		root_size *= 2;
+		root = (int *)malloc(root_size * sizeof(int));
 		if (root == NULL)
 			lib_error("MAIN: Can't allocate root array on heap.");
-		memset(root, -1, root_size * 2 * sizeof(int));
+		memset(root, -1, root_size * sizeof(int));
 	}
 
 	/* Quicksort local array and then send back to root. */
