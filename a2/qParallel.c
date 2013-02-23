@@ -88,7 +88,7 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 			MPI_Isend(*local, lt_size, MPI_INT, info.partner, SEND_TAG, MPI_COMM_WORLD, &mpi_request);
 			MPI_Recv(recv, recv_size, MPI_INT, info.partner, SEND_TAG, MPI_COMM_WORLD, &mpi_status);
 			/* We have sent lower portion, move elements greater down. Update local_size.*/
-			memmove(*local, local+lt_size, gt_size*sizeof(int));
+			memmove(*local, *local+lt_size, gt_size*sizeof(int));
 			*local_size = gt_size;
 		} else {
 			MPI_Isend(*local+lt_size, gt_size, MPI_INT, info.partner, SEND_TAG, MPI_COMM_WORLD, &mpi_request);
