@@ -24,12 +24,16 @@
 
 /******************* Constants/Macros *********************/
 #define BUF_SIZE 1000
+//#define QDEBUG 1 // Enable this line for tracing code.
 
 /******************* Type Definitions *********************/
 
 
 /**************** Static Data Definitions *****************/
+#ifdef QDEBUG
+/* Buffer used in tracing. */
 static char buf[BUF_SIZE];
+#endif
 
 /****************** Static Functions **********************/
 
@@ -75,13 +79,15 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 		} else {
 			MPI_Recv(&pivot, 1, MPI_INT, MPI_ANY_SOURCE, SEND_TAG, MPI_COMM_WORLD, &mpi_status);
 		}
-		MPI_Barrier(MPI_COMM_WORLD);
 
 		/* Partition the array. */
 		lib_partition_array(pivot, *local, *local_size, &lt_size, &gt_size);
+
+#ifdef QDEBUG
 		lib_trace_array(buf, BUF_SIZE, "PARTITIONED:", *local, *local_size, id);
 		printf("%s", buf);
 		MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
 		/* Determine position in the cube. If below is true, I am in upper part of this dimension. */
 		if (id & (1<<d)) {
@@ -101,6 +107,7 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 		MPI_Get_count(&mpi_status, MPI_INT, &received);
 		lib_array_union(local, local_size, recv, received);
 
+#ifdef QDEBUG
 		lib_trace_array(buf, BUF_SIZE, "RECV:", recv, received, id);
 		printf("%s", buf);
 		MPI_Barrier(MPI_COMM_WORLD);
@@ -108,6 +115,7 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 		lib_trace_array(buf, BUF_SIZE, "UNION:", *local, *local_size, id);
 		printf("%s", buf);
 		MPI_Barrier(MPI_COMM_WORLD);
+#endif
 	}
 }
 
@@ -165,22 +173,26 @@ int main(int argc, char **argv) {
 
 	/* Scatter to across processes and then do hyper quicksort algorithm. */
 	MPI_Scatter(root, num_proc, MPI_INT, local, local_size, MPI_INT, 0, MPI_COMM_WORLD);
+
+#ifdef QDEBUG
 	lib_trace_array(buf, BUF_SIZE, "SCATTER:", local, local_size, id);
 	printf("%s", buf);
-
 	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
 	/* Rearrange the cube so that we have roughly sorted data. */
 	hyper_quicksort(MAX_DIM, id, &local, &local_size, recv, recv_size);
 
+#ifdef QDEBUG
 	MPI_Barrier(MPI_COMM_WORLD);
 	lib_trace_array(buf, BUF_SIZE, "AFTERHYPER:", local, local_size, id);
 	printf("%s", buf);
 	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
 	/* Quicksort local array and then send back to root. */
-	//qsort(local, local_size, sizeof(int), lib_compare);
-//	MPI_Gather(local, local_size, MPI_INT, root, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
+	qsort(local, local_size, sizeof(int), lib_compare);
+	MPI_Gather(local, local_size, MPI_INT, root, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
 
 	/* Last step, root has result write to output the sorted array. */
 	if (id == ROOT) {
@@ -190,6 +202,7 @@ int main(int argc, char **argv) {
 	}
 
 	free(recv);
+	/* May have been entirely deallocated if has no more at process. */
 	if (local != NULL)
 		free(local);
 
