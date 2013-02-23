@@ -84,7 +84,7 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 		lib_partition_array(pivot, *local, *local_size, &lt_size, &gt_size);
 
 #ifdef QDEBUG
-		lib_trace_array(buf, BUF_SIZE, "PARTITIONED:", *local, *local_size, id);
+		lib_trace_array(buf, BUF_SIZE, "PARTITIONED", *local, *local_size, id);
 		printf("%s", buf);
 		MPI_Barrier(MPI_COMM_WORLD);
 #endif
@@ -108,11 +108,11 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 		lib_array_union(local, local_size, recv, received);
 
 #ifdef QDEBUG
-		lib_trace_array(buf, BUF_SIZE, "RECV:", recv, received, id);
+		lib_trace_array(buf, BUF_SIZE, "RECV", recv, received, id);
 		printf("%s", buf);
 		MPI_Barrier(MPI_COMM_WORLD);
 
-		lib_trace_array(buf, BUF_SIZE, "UNION:", *local, *local_size, id);
+		lib_trace_array(buf, BUF_SIZE, "UNION", *local, *local_size, id);
 		printf("%s", buf);
 		MPI_Barrier(MPI_COMM_WORLD);
 #endif
@@ -158,10 +158,11 @@ int main(int argc, char **argv) {
 		lib_read_file(INPUT, root, root_size);
 	}
 
-	/* Allocate a recv buf of size 3*n/p and a local size of n/p.
-	 * The recv buf accounts for the fact that at most 3*n/p can be transferred if it
-	 * keeps all values in round 1 and 2 then transfers. */
-	recv = (int *)malloc(root_size* sizeof(int));
+	/*
+	 * Allocate a recv buf of root_size (though not likely needed) and a local size of n/p.
+	 * The recv buf accounts for the unlikely but possible lop sideded partitioning.
+	 */
+	recv = (int *)malloc(root_size * sizeof(int));
 	if (recv == NULL)
 		lib_error("MAIN: Can't allocate recv array on heap.");
 
@@ -171,28 +172,33 @@ int main(int argc, char **argv) {
 	recv_size = root_size;
 	local_size = num_proc;
 
-	/* Scatter to across processes and then do hyper quicksort algorithm. */
-	MPI_Scatter(root, num_proc, MPI_INT, local, local_size, MPI_INT, 0, MPI_COMM_WORLD);
+	/* Scatter across the processes and then do hyper quicksort algorithm. */
+	MPI_Scatter(root, num_proc, MPI_INT, local, local_size, MPI_INT, ROOT, MPI_COMM_WORLD);
 
 #ifdef QDEBUG
-	lib_trace_array(buf, BUF_SIZE, "SCATTER:", local, local_size, id);
+	lib_trace_array(buf, BUF_SIZE, "SCATTER", local, local_size, id);
 	printf("%s", buf);
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-	/* Rearrange the cube so that we have roughly sorted data. */
+	/* Rearrange the cube so that each processor has data strictly less than one with higher number.*/
 	hyper_quicksort(MAX_DIM, id, &local, &local_size, recv, recv_size);
 
 #ifdef QDEBUG
 	MPI_Barrier(MPI_COMM_WORLD);
-	lib_trace_array(buf, BUF_SIZE, "AFTERHYPER:", local, local_size, id);
+	lib_trace_array(buf, BUF_SIZE, "AFTERHYPER", local, local_size, id);
 	printf("%s", buf);
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
 	/* Quicksort local array and then send back to root. */
 	qsort(local, local_size, sizeof(int), lib_compare);
-	MPI_Gather(local, local_size, MPI_INT, root, num_proc, MPI_INT, 0, MPI_COMM_WORLD);
+
+	if (id == ROOT) {
+		free(root);
+		root = (int *)malloc(root_size * 2 * sizeof(int));
+	}
+	MPI_Gather(local, local_size, MPI_INT, root, 2*num_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
 
 	/* Last step, root has result write to output the sorted array. */
 	if (id == ROOT) {
