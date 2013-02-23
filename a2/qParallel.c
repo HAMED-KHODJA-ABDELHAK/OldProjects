@@ -24,7 +24,7 @@
 
 /******************* Constants/Macros *********************/
 #define BUF_SIZE 100000
-//#define QDEBUG 1 // Enable this line for tracing code.
+#define QDEBUG 1 // Enable this line for tracing code.
 
 /******************* Type Definitions *********************/
 
@@ -213,11 +213,11 @@ int main(int argc, char **argv) {
 		lib_compress_array(world, root, root_size);
 
 #ifdef QDEBUG
-		lib_trace_array(buf, BUF_SIZE, "GATHER", root, root_size, id);
+		lib_trace_array(buf, BUF_SIZE, "GATHER", root, root_size/2, id);
 		printf("%s", buf);
 #endif
 
-		lib_write_file(OUTPUT, root, root_size);
+		lib_write_file(OUTPUT, root, root_size/2);
 		printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
 		free(root);
 	}
