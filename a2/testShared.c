@@ -216,6 +216,21 @@ void test_subgroup_info(void) {
 	CU_ASSERT(actual.group_size == expected.group_size);
 }
 
+/*
+ * Test to exercise the array tracing function.
+ */
+void test_compress_array(void) {
+	int dimension = 2, id = 6;
+	subgroup_info_t actual = {0, 0, 0 ,0, id}, expected = {4, 1, 2, 4, id};
+
+	lib_subgroup_info(dimension, &actual);
+
+	CU_ASSERT(actual.group_num == expected.group_num);
+	CU_ASSERT(actual.member_num == expected.member_num);
+	CU_ASSERT(actual.partner == expected.partner);
+	CU_ASSERT(actual.group_size == expected.group_size);
+}
+
 /* The main() function for setting up and running the tests.
  * Returns a CUE_SUCCESS on successful running, another
  * CUnit error code on failure.
@@ -248,8 +263,8 @@ int main() {
 	   (NULL == CU_add_test(sharedSuite, "Partition Array", test_partition_array)) ||
 	   (NULL == CU_add_test(sharedSuite, "Array Union", test_array_union)) ||
 	   (NULL == CU_add_test(sharedSuite, "Array Trace", test_trace_array)) ||
-	   (NULL == CU_add_test(sharedSuite, "Subgroup Info", test_subgroup_info))
-
+	   (NULL == CU_add_test(sharedSuite, "Subgroup Info", test_subgroup_info)) ||
+	   (NULL == CU_add_test(sharedSuite, "Compress Array", test_compress_array))
       )
    {
       CU_cleanup_registry();

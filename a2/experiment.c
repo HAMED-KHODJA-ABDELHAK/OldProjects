@@ -62,6 +62,15 @@ void val_print(int vals[], int size) {
  */
 //int main(int argc, char **argv) {
 int main(void) {
+	int *root, root_size = 10;
+	root = (int *)malloc(root_size * 2 * sizeof(int));
+	if (root == NULL)
+		lib_error("MAIN: Can't allocate root array on heap.");
+	memset(root, -1, root_size*sizeof(int));
+
+	char buf[1000];
+	lib_trace_array(buf, 1000, "T", root, root_size, 1);
+	printf("%s", buf);
 
 	return 0;
 }

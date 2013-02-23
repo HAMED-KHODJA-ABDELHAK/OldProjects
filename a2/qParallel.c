@@ -23,7 +23,7 @@
 #include "shared.h"
 
 /******************* Constants/Macros *********************/
-#define BUF_SIZE 1000
+#define BUF_SIZE 100000
 //#define QDEBUG 1 // Enable this line for tracing code.
 
 /******************* Type Definitions *********************/
@@ -191,13 +191,27 @@ int main(int argc, char **argv) {
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-	/* Quicksort local array and then send back to root.
-	 * MIP_Gatherv required since not gauranteed even distribution. */
-	qsort(local, local_size, sizeof(int), lib_compare);
-	//MPI_Gather(local, local_size, MPI_INT, root, 2*num_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
+	/*
+	 * Reallocated root to be double size, mpi_gather doesn't know how many per process anymore.
+	 * Set values to -1.
+	 */
+	if (id == ROOT) {
+		root = (int *)malloc(root_size * 2 * sizeof(int));
+		if (root == NULL)
+			lib_error("MAIN: Can't allocate root array on heap.");
+		memset(root, -1, root_size * 2 * sizeof(int));
+	}
 
-	int recvcounts[world], displs = 0;
-	MPI_Gatherv(local, local_size, MPI_INT, root, recvcounts, &displs, MPI_INT, ROOT, MPI_COMM_WORLD);
+	/* Quicksort local array and then send back to root. */
+	qsort(local, local_size, sizeof(int), lib_compare);
+	MPI_Gather(local, local_size, MPI_INT, root, 2*num_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
+
+#ifdef QDEBUG
+	if (id == ROOT) {
+		lib_trace_array(buf, BUF_SIZE, "GATHER", root, root_size, id);
+		printf("%s", buf);
+	}
+#endif
 	/* Last step, root has result write to output the sorted array. */
 	if (id == ROOT) {
 		lib_write_file(OUTPUT, root, root_size);

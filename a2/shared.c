@@ -235,8 +235,19 @@ void lib_trace_array(char *buf, int buf_size, char *tag, int array[], int size, 
 }
 
 /*
- * In place merge of multiple arrays.
+ * Once gathered, root array contains a lot of empty values as -1.
+ * Compress down array to be contiguous.
  */
-void lib_merge_arrays() {
+void lib_compress_array(int world, int offset, int root[], int root_size) {
+	int *left = root, *right = root+1;
 
+	for (int i = 0; i < world; ++i) {
+		right = root + i*offset;
+
+		while (*right != -1 && (right - root) < root_size) {
+			lib_swap(left, right);
+			++left;
+			++right;
+		}
+	}
 }

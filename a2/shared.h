@@ -98,5 +98,11 @@ void lib_array_union(int *a[], int *a_size, const int b[], const int b_size);
  */
 void lib_trace_array(char *buf, int buf_size, char *tag, int array[], int size, int id);
 
+/*
+ * Once gathered, root array contains a lot of empty values as -1.
+ * Compress down array to be contiguous.
+ */
+void lib_compress_array(int world, int offset, int root[], int root_size);
+
 #endif /* _SHARED_H_ */
 
