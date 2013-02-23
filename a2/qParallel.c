@@ -191,15 +191,13 @@ int main(int argc, char **argv) {
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-	/* Quicksort local array and then send back to root. */
+	/* Quicksort local array and then send back to root.
+	 * MIP_Gatherv required since not gauranteed even distribution. */
 	qsort(local, local_size, sizeof(int), lib_compare);
+	//MPI_Gather(local, local_size, MPI_INT, root, 2*num_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
 
-	if (id == ROOT) {
-		free(root);
-		root = (int *)malloc(root_size * 2 * sizeof(int));
-	}
-	MPI_Gather(local, local_size, MPI_INT, root, 2*num_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
-
+	int recvcounts[world], displs = 0;
+	MPI_Gatherv(local, local_size, MPI_INT, root, recvcounts, &displs, MPI_INT, ROOT, MPI_COMM_WORLD);
 	/* Last step, root has result write to output the sorted array. */
 	if (id == ROOT) {
 		lib_write_file(OUTPUT, root, root_size);
