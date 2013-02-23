@@ -15,7 +15,7 @@ RM:=@rm -rf
 CFLAGS:=-std=c99
 F_DEBUG:=-ggdb -Wall -Wextra -Winline -pedantic
 INCLUDE:=-I./cunit/include 
-LD_FLAGS:=-L./cunit/lib
+LD_PATH:=-L./cunit/lib
 
 # Library stuff, reduce duplication. Makes an archive of common code.
 AR:=ar -rf
@@ -23,7 +23,7 @@ RANLIB:=ranlib
 LIB_NAME:=shared.a #Name only.
 LIB_ARC:=$(EXE_DIR)/$(LIB_NAME) #Final directory + name.
 LIB_OBJS:=$(subst .a,.o,$(LIB_NAME)) # Objects required.
-LIBS:=$(LIB_ARC) ./cunit/lib/libcunit.a 
+LIBS:=$(LIB_ARC) -lcunit 
 
 # Generic files to clean.
 FILES_TO_CLEAN:=*.o *.a *.out *.exe *~ temp.* *.gcov *.gcda *.gcno
@@ -37,7 +37,7 @@ EXES = \
 
 # Custom rules, define how to link and compile respectively.
 $(EXE_DIR)/%: %.o 
-	$(CC) -o $@ $< $(LD_FLAGS) $(LIBS) 
+	$(CC) -o $@ $(LD_PATH) $< $(LIBS) 
 
 %.o: $(SRC_DIR)/%.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(F_DEBUG) -o $@ -c $< 

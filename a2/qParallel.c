@@ -11,6 +11,10 @@
  * mode: Flag that optionally makes master generate a new input.
  * 		-> Use "gen" to generate new input.
  * 		-> Use "read" to use existing input.txt.
+ * TODO:
+ *	-> Switch to logging to a file.
+ *  -> Resolve outstanding scaling issue. Memory limited?
+ *  -> Resolve CUnit issue on cirrus.
  */
 /********************* Header Files ***********************/
 /* C Headers */
@@ -23,8 +27,9 @@
 #include "shared.h"
 
 /******************* Constants/Macros *********************/
-#define BUF_SIZE 100000
-#define QDEBUG 1 // Enable this line for tracing code.
+#define BUF_SIZE 			1000000
+#define GATHER_SCALE 		3
+#define QDEBUG 				1 // Enable this line for tracing code.
 
 /******************* Type Definitions *********************/
 
@@ -83,9 +88,12 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 		/* Partition the array. */
 		lib_partition_array(pivot, *local, *local_size, &lt_size, &gt_size);
 
+		/* Barrier here ensures all outstanding pivot recvs complete. */
 #ifdef QDEBUG
 		lib_trace_array(buf, BUF_SIZE, "PARTITIONED", *local, *local_size, id);
 		printf("%s", buf);
+		MPI_Barrier(MPI_COMM_WORLD);
+#else
 		MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
@@ -107,6 +115,7 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 		MPI_Get_count(&mpi_status, MPI_INT, &received);
 		lib_array_union(local, local_size, recv, received);
 
+		/* Ensure all partner exchanges complete before proceeding to the next round. */
 #ifdef QDEBUG
 		lib_trace_array(buf, BUF_SIZE, "RECV", recv, received, id);
 		printf("%s", buf);
@@ -114,6 +123,8 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 
 		lib_trace_array(buf, BUF_SIZE, "UNION", *local, *local_size, id);
 		printf("%s", buf);
+		MPI_Barrier(MPI_COMM_WORLD);
+#else
 		MPI_Barrier(MPI_COMM_WORLD);
 #endif
 	}
@@ -197,7 +208,7 @@ int main(int argc, char **argv) {
 	 */
 	if (id == ROOT) {
 		free(root);
-		root_size *= 2;
+		root_size *= GATHER_SCALE;
 		root = (int *)malloc(root_size * sizeof(int));
 		if (root == NULL)
 			lib_error("MAIN: Can't allocate root array on heap.");
@@ -206,18 +217,18 @@ int main(int argc, char **argv) {
 
 	/* Quicksort local array and then send back to root. */
 	qsort(local, local_size, sizeof(int), lib_compare);
-	MPI_Gather(local, local_size, MPI_INT, root, 2*num_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
+	MPI_Gather(local, local_size, MPI_INT, root, GATHER_SCALE*num_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
 
 	/* Last step, root has result write to output the sorted array. */
 	if (id == ROOT) {
 		lib_compress_array(world, root, root_size);
 
 #ifdef QDEBUG
-		lib_trace_array(buf, BUF_SIZE, "GATHER", root, root_size/2, id);
+		lib_trace_array(buf, BUF_SIZE, "GATHER", root, root_size/GATHER_SCALE, id);
 		printf("%s", buf);
 #endif
 
-		lib_write_file(OUTPUT, root, root_size/2);
+		lib_write_file(OUTPUT, root, root_size/GATHER_SCALE);
 		printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
 		free(root);
 	}

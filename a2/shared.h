@@ -13,7 +13,7 @@
 /* Flag to pass in to generate new input.txt */
 #define GENERATE_FLAG 	"gen"
 /* Max value of randomly generated numbers */
-#define MAX_VAL 		100
+#define MAX_VAL 		10000
 /* Root ID */
 #define ROOT 			0
 /* Maximum dimension of the hypercube */
