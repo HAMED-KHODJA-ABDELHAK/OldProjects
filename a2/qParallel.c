@@ -74,7 +74,7 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 		/* Select and broadcast pivot only to subgroup. */
 		if (info.member_num == 0) {
 			pivot = lib_select_pivot(*local, *local_size);
-			printf("ROUND: %d, GROUP: %d, pivot is: %d.\n", d, info.group_num, pivot);
+			printf("ROUND: %d, GROUP: %d, pivot is: %d.\n", dimension-d, info.group_num, pivot);
 			send_pivot(pivot, &info);
 		} else {
 			MPI_Recv(&pivot, 1, MPI_INT, MPI_ANY_SOURCE, SEND_TAG, MPI_COMM_WORLD, &mpi_status);
