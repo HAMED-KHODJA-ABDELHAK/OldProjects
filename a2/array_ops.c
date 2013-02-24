@@ -10,7 +10,7 @@
 #include <time.h>
 
 /* Project Headers */
-#include "shared.h"
+#include "array_ops.h"
 
 /******************* Constants/Macros *********************/
 

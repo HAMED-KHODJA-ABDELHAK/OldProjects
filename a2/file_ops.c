@@ -9,7 +9,7 @@
 #include <time.h>
 
 /* Project Headers */
-#include "shared.h"
+#include "array_ops.h"
 #include "file_ops.h"
 
 /******************* Constants/Macros *********************/
@@ -96,7 +96,7 @@ void lib_trace_array(FILE *f, char *tag, int array[], int size) {
 	/* Print blocks of 16 numbers into it and flush. */
 	for (int i = 0; i < size; ++i) {
 		count += snprintf(buf+count, buf_size-count, "%d ", array[i]);
-		if (i != 0 && (i % 16) == 0) {
+		if (i != 0 && (i % 20) == 0) {
 			count += snprintf(buf+count, buf_size-count, "\n");
 			lib_log(f, tag, buf);
 

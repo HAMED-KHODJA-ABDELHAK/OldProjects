@@ -24,7 +24,7 @@
 
 /* Project Headers */
 #include "mpi.h"
-#include "shared.h"
+#include "array_ops.h"
 #include "file_ops.h"
 
 /******************* Constants/Macros *********************/

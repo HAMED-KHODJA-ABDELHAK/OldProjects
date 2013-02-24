@@ -10,7 +10,7 @@
 /* Project Headers */
 #include "CUnit/Basic.h"
 #include "mpi.h"
-#include "shared.h"
+#include "array_ops.h"
 
 /******************* Constants/Macros *********************/
 #define TEMP_FILE 		"temp.txt"
