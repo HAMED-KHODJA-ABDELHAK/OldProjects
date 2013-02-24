@@ -129,7 +129,9 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
  * Main execution body.
  */
 int main(int argc, char **argv) {
-	int id = 0, world = 0, num_proc = 0, root_size = 0, recv_size = 0, local_size = 0;
+	MPI_Request mpi_request;
+	MPI_Status mpi_status;
+	int id = 0, world = 0, num_proc = 0, root_size = 0, recv_size = 0, local_size = 0, received = 0;
 	int *root = NULL, *recv = NULL, *local = NULL;
 	char file[FILE_SIZE];
 	double start = 0.0;
@@ -198,32 +200,30 @@ int main(int argc, char **argv) {
 	lib_trace_array(log, "HYPER", local, local_size);
 #endif
 
-	/*
-	 * Reallocated root to be rescaled, mpi_gather doesn't know how many per process anymore.
-	 * Set values to -1.
-	 */
-	if (id == ROOT) {
-		free(root);
-		root_size *= GATHER_SCALE;
-		root = (int *)malloc(root_size * sizeof(int));
-		if (root == NULL)
-			lib_error("MAIN: Can't allocate root array on heap.");
-		memset(root, -1, root_size * sizeof(int));
-	}
-
 	/* Quicksort local array and then send back to root. */
 	qsort(local, local_size, sizeof(int), lib_compare);
-	MPI_Gather(local, local_size, MPI_INT, root, GATHER_SCALE*num_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
+
+	/* Copy to front of root the sorted local set. */
+	memcpy(root, local, local_size*sizeof(int));
+	root_size = local_size;
+
+	/* Gather back to root from each processor, write directly into root array, offset by received size. */
+	if (id == ROOT) {
+		for (int r_id = 1; r_id < world; ++r_id) {
+			MPI_Recv(root+root_size, num_proc*world, MPI_INT, r_id, r_id, MPI_COMM_WORLD, &mpi_status);
+			MPI_Get_count(&mpi_status, MPI_INT, &received);
+			root_size += received;
+		}
+	} else {
+		MPI_Isend(local, local_size, MPI_INT, ROOT, id, MPI_COMM_WORLD, &mpi_request);
+	}
+	//MPI_Gather(local, local_size, MPI_INT, root, GATHER_SCALE*num_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
 
 	/* Last step, root has result write to output the sorted array. */
 	if (id == ROOT) {
-		lib_compress_array(world, root, root_size);
+		//lib_compress_array(world, root, root_size);
 
-#ifdef QDEBUG
-		lib_trace_array(log, "GATHER", root, root_size/GATHER_SCALE);
-#endif
-
-		lib_write_file(OUTPUT, root, root_size/GATHER_SCALE);
+		lib_write_file(OUTPUT, root, root_size);
 		printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
 		free(root);
 	}
