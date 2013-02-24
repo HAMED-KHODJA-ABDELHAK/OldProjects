@@ -27,8 +27,6 @@
 #include "file_ops.h"
 
 /******************* Constants/Macros *********************/
-/* Flag to pass in to generate new input.txt */
-#define GENERATE_FLAG 		"gen"
 #define BUF_SIZE 			1000000
 #define GATHER_SCALE 		2
 #define QDEBUG 				1 // Enable this line for tracing code.

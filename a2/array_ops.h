@@ -7,6 +7,8 @@
 /* Project Headers */
 
 /******************* Constants/Macros *********************/
+/* Flag to pass in to generate new input.txt */
+#define GENERATE_FLAG 		"gen"
 /* Max value of randomly generated numbers */
 #define MAX_VAL 		1000
 /* Root ID */
