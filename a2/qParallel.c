@@ -203,12 +203,12 @@ int main(int argc, char **argv) {
 	/* Quicksort local array and then send back to root. */
 	qsort(local, local_size, sizeof(int), lib_compare);
 
-	/* Copy to front of root the sorted local set. */
-	memcpy(root, local, local_size*sizeof(int));
-	root_size = local_size;
-
-	/* Gather back to root from each processor, write directly into root array, offset by received size. */
+	/* Copy to front of root the sorted local set.
+	 * Gather back to root from each processor, write directly into root array, offset by received size. */
 	if (id == ROOT) {
+		memcpy(root, local, local_size*sizeof(int));
+		root_size = local_size;
+
 		for (int r_id = 1; r_id < world; ++r_id) {
 			MPI_Recv(root+root_size, num_proc*world, MPI_INT, r_id, r_id, MPI_COMM_WORLD, &mpi_status);
 			MPI_Get_count(&mpi_status, MPI_INT, &received);
