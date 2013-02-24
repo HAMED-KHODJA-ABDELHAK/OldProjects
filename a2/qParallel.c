@@ -97,9 +97,6 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 		/* Barrier here ensures all outstanding pivot recvs complete. */
 #ifdef QDEBUG
 		lib_trace_array(log, "PARTITIONED", *local, *local_size);
-		MPI_Barrier(MPI_COMM_WORLD);
-#else
-		MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
 		/* Determine position in the cube. If below is true, I am in upper part of this dimension. */
@@ -123,12 +120,7 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 		/* Ensure all partner exchanges complete before proceeding to the next round. */
 #ifdef QDEBUG
 		lib_trace_array(log, "RECV", recv, received);
-		MPI_Barrier(MPI_COMM_WORLD);
-
 		lib_trace_array(log, "UNION", *local, *local_size);
-		MPI_Barrier(MPI_COMM_WORLD);
-#else
-		MPI_Barrier(MPI_COMM_WORLD);
 #endif
 	}
 }
@@ -197,16 +189,13 @@ int main(int argc, char **argv) {
 
 #ifdef QDEBUG
 	lib_trace_array(log, "SCATTER", local, local_size);
-	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
 	/* Rearrange the cube so that each processor has data strictly less than one with higher number.*/
 	hyper_quicksort(MAX_DIM, id, &local, &local_size, recv, recv_size);
 
 #ifdef QDEBUG
-	MPI_Barrier(MPI_COMM_WORLD);
 	lib_trace_array(log, "HYPER", local, local_size);
-	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
 	/*
