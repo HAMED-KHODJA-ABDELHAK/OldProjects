@@ -118,7 +118,7 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 
 		/* Ensure all partner exchanges complete before proceeding to the next round. */
 #ifdef QDEBUG
-		lib_trace_array(log, "RECV", recv, recv_size);
+		lib_trace_array(log, "RECV", recv, received);
 		MPI_Barrier(MPI_COMM_WORLD);
 
 		lib_trace_array(log, "UNION", *local, *local_size);

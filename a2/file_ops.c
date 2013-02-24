@@ -76,7 +76,8 @@ void lib_log(FILE *f, const char *tag, const char *mesg) {
 	/* Get current time and format string into date. */
 	time(&rawtime);
 	timeinfo = localtime(&rawtime);
-	strftime(date, 30, "(%d %b, %Y %T)", timeinfo);
+//	strftime(date, 30, "(%d %b, %Y %T)", timeinfo); // Full date.
+	strftime(date, 30, "(%T)", timeinfo);
 
 	fprintf(f, "%s %s: %s", date, tag, mesg);
 }
