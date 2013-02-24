@@ -27,10 +27,17 @@
 #include "file_ops.h"
 
 /******************* Constants/Macros *********************/
+/* Flag to pass in to generate new input.txt */
+#define GENERATE_FLAG 		"gen"
 #define BUF_SIZE 			1000000
 #define GATHER_SCALE 		2
 #define QDEBUG 				1 // Enable this line for tracing code.
 #define LOG_SIZE			100
+/* Maximum dimension of the hypercube */
+#define MAX_DIM 			3
+/* A tag for use in the send and recv */
+#define PIVOT_TAG			0
+#define EXCHANGE_TAG 		1
 
 /******************* Type Definitions *********************/
 
@@ -56,7 +63,7 @@ void send_pivot(int pivot, const subgroup_info_t * const info) {
 	MPI_Request mpi_request;
 
 	for (int i = 1; i < info->group_size; ++i)
-		MPI_Isend(&pivot, 1, MPI_INT, info->world_id+i, SEND_TAG, MPI_COMM_WORLD, &mpi_request);
+		MPI_Isend(&pivot, 1, MPI_INT, info->world_id+i, PIVOT_TAG, MPI_COMM_WORLD, &mpi_request);
 }
 
 /*
@@ -83,7 +90,7 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 			lib_log(log, "PIVOT", log_buf);
 			send_pivot(pivot, &info);
 		} else {
-			MPI_Recv(&pivot, 1, MPI_INT, MPI_ANY_SOURCE, SEND_TAG, MPI_COMM_WORLD, &mpi_status);
+			MPI_Recv(&pivot, 1, MPI_INT, MPI_ANY_SOURCE, PIVOT_TAG, MPI_COMM_WORLD, &mpi_status);
 		}
 
 		/* Partition the array. */
@@ -99,14 +106,14 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 
 		/* Determine position in the cube. If below is true, I am in upper part of this dimension. */
 		if (id & (1<<d)) {
-			MPI_Isend(*local, lt_size, MPI_INT, info.partner, SEND_TAG, MPI_COMM_WORLD, &mpi_request);
-			MPI_Recv(recv, recv_size, MPI_INT, info.partner, SEND_TAG, MPI_COMM_WORLD, &mpi_status);
+			MPI_Isend(*local, lt_size, MPI_INT, info.partner, EXCHANGE_TAG, MPI_COMM_WORLD, &mpi_request);
+			MPI_Recv(recv, recv_size, MPI_INT, info.partner, EXCHANGE_TAG, MPI_COMM_WORLD, &mpi_status);
 			/* We have sent lower portion, move elements greater down. Update local_size.*/
 			memmove(*local, *local+lt_size, gt_size*sizeof(int));
 			*local_size = gt_size;
 		} else {
-			MPI_Isend(*local+lt_size, gt_size, MPI_INT, info.partner, SEND_TAG, MPI_COMM_WORLD, &mpi_request);
-			MPI_Recv(recv, recv_size, MPI_INT, info.partner, SEND_TAG, MPI_COMM_WORLD, &mpi_status);
+			MPI_Isend(*local+lt_size, gt_size, MPI_INT, info.partner, EXCHANGE_TAG, MPI_COMM_WORLD, &mpi_request);
+			MPI_Recv(recv, recv_size, MPI_INT, info.partner, EXCHANGE_TAG, MPI_COMM_WORLD, &mpi_status);
 			/* We have sent upper portion of array, merely update size and ignore older elements. */
 			*local_size = lt_size;
 		}

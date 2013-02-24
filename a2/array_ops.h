@@ -7,16 +7,11 @@
 /* Project Headers */
 
 /******************* Constants/Macros *********************/
-/* Flag to pass in to generate new input.txt */
-#define GENERATE_FLAG 	"gen"
 /* Max value of randomly generated numbers */
 #define MAX_VAL 		1000
 /* Root ID */
 #define ROOT 			0
-/* Maximum dimension of the hypercube */
-#define MAX_DIM 		3
-/* A tag for use in the send and recv */
-#define SEND_TAG 		0
+
 
 /******************* Type Declarations ********************/
 /* Struct contains information on a subgroup in a hypercube. */
