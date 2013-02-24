@@ -28,7 +28,7 @@
 
 /******************* Constants/Macros *********************/
 #define BUF_SIZE 			1000000
-#define GATHER_SCALE 		2
+#define GATHER_SCALE 		1.2	
 #define QDEBUG 				1 // Enable this line for tracing code.
 #define LOG_SIZE			100
 /* Maximum dimension of the hypercube */
@@ -129,9 +129,7 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
  * Main execution body.
  */
 int main(int argc, char **argv) {
-	MPI_Request mpi_request;
-	MPI_Status mpi_status;
-	int id = 0, world = 0, num_proc = 0, root_size = 0, recv_size = 0, local_size = 0, received = 0;
+	int id = 0, world = 0, num_proc = 0, root_size = 0, recv_size = 0, local_size = 0;
 	int *root = NULL, *recv = NULL, *local = NULL;
 	char file[FILE_SIZE];
 	double start = 0.0;
@@ -176,15 +174,15 @@ int main(int argc, char **argv) {
 	 * Allocate a recv buf of root_size (though not likely needed) and a local size of n/p.
 	 * The recv buf accounts for the unlikely but possible lop sideded partitioning.
 	 */
-	recv = (int *)malloc(num_proc * GATHER_SCALE * sizeof(int));
+	recv_size = num_proc * GATHER_SCALE;
+	local_size = num_proc;
+	recv = (int *)malloc(recv_size * sizeof(int));
 	if (recv == NULL)
 		lib_error("MAIN: Can't allocate recv array on heap.");
 
-	local = (int *)malloc(num_proc * sizeof(int));
+	local = (int *)malloc(local_size * sizeof(int));
 	if (local == NULL)
 		lib_error("MAIN: Can't allocate local array on heap.");
-	recv_size = num_proc * GATHER_SCALE;
-	local_size = num_proc;
 
 	/* Scatter across the processes and then do hyper quicksort algorithm. */
 	MPI_Scatter(root, num_proc, MPI_INT, local, local_size, MPI_INT, ROOT, MPI_COMM_WORLD);
@@ -200,32 +198,32 @@ int main(int argc, char **argv) {
 	lib_trace_array(log, "HYPER", local, local_size);
 #endif
 
+	/*
+	 * Reallocated root to be rescaled, mpi_gather doesn't know how many per process anymore.
+	 * Set values to -1.
+	 */
+	if (id == ROOT) {
+		free(root);
+		root_size *= GATHER_SCALE;
+		root = (int *)malloc(root_size * sizeof(int));
+		if (root == NULL)
+			lib_error("MAIN: Can't allocate root array on heap.");
+		memset(root, -1, root_size * sizeof(int));
+	}
+
 	/* Quicksort local array and then send back to root. */
 	qsort(local, local_size, sizeof(int), lib_compare);
-
-	/* Copy to front of root the sorted local set.
-	 * Gather back to root from each processor, write directly into root array, offset by received size. */
-	if (id == ROOT) {
-		int rem = num_proc * world - local_size;
-		memcpy(root, local, local_size*sizeof(int));
-		root_size = local_size;
-
-		for (int r_id = 1; r_id < world; ++r_id) {
-			MPI_Recv(root+root_size, rem, MPI_INT, r_id, r_id, MPI_COMM_WORLD, &mpi_status);
-			MPI_Get_count(&mpi_status, MPI_INT, &received);
-			root_size += received;
-			rem -= received;
-		}
-	} else {
-		MPI_Isend(local, local_size, MPI_INT, ROOT, id, MPI_COMM_WORLD, &mpi_request);
-	}
-	//MPI_Gather(local, local_size, MPI_INT, root, GATHER_SCALE*num_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
+	MPI_Gather(local, local_size, MPI_INT, root, GATHER_SCALE*num_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
 
 	/* Last step, root has result write to output the sorted array. */
 	if (id == ROOT) {
-		//lib_compress_array(world, root, root_size);
+		lib_compress_array(world, root, root_size);
 
-		lib_write_file(OUTPUT, root, root_size);
+#ifdef QDEBUG
+		lib_trace_array(log, "GATHER", root, root_size/GATHER_SCALE);
+#endif
+
+		lib_write_file(OUTPUT, root, root_size/GATHER_SCALE);
 		printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
 		free(root);
 	}
