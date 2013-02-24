@@ -12,7 +12,6 @@
  * 		-> Use "gen" to generate new input.
  * 		-> Use "read" to use existing input.txt.
  * TODO:
- *	-> Switch to logging to a file.
  *  -> Resolve outstanding scaling issue. Memory limited?
  *  -> Resolve CUnit issue on cirrus.
  */
@@ -29,7 +28,7 @@
 
 /******************* Constants/Macros *********************/
 #define BUF_SIZE 			1000000
-#define GATHER_SCALE 		3
+#define GATHER_SCALE 		2
 #define QDEBUG 				1 // Enable this line for tracing code.
 #define LOG_SIZE			100
 
@@ -206,7 +205,7 @@ int main(int argc, char **argv) {
 #endif
 
 	/*
-	 * Reallocated root to be double size, mpi_gather doesn't know how many per process anymore.
+	 * Reallocated root to be rescaled, mpi_gather doesn't know how many per process anymore.
 	 * Set values to -1.
 	 */
 	if (id == ROOT) {
