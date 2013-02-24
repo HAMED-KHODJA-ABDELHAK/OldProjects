@@ -80,6 +80,7 @@ void lib_log(FILE *f, const char *tag, const char *mesg) {
 	strftime(date, 30, "(%T)", timeinfo);
 
 	fprintf(f, "%s %s: %s", date, tag, mesg);
+	fflush(f);
 }
 
 /*
@@ -110,4 +111,5 @@ void lib_trace_array(FILE *f, char *tag, int array[], int size) {
 		count += snprintf(buf+count, buf_size-count, "\n");
 		lib_log(f, tag, buf);
 	}
+	fflush(f);
 }
