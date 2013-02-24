@@ -11,6 +11,7 @@
 /* Project Headers */
 #include "mpi.h"
 #include "shared.h"
+#include "file_ops.h"
 
 /******************* Constants/Macros *********************/
 
@@ -62,15 +63,22 @@ void val_print(int vals[], int size) {
  */
 //int main(int argc, char **argv) {
 int main(void) {
-	int *root, root_size = 10;
-	root = (int *)malloc(root_size * 2 * sizeof(int));
-	if (root == NULL)
-		lib_error("MAIN: Can't allocate root array on heap.");
-	memset(root, -1, root_size*sizeof(int));
+	FILE *f;
+	int buf_size = 200;
+	char buf[buf_size];
 
-	char buf[1000];
-	lib_trace_array(buf, 1000, "T", root, root_size, 1);
-	printf("%s", buf);
+	snprintf(buf, buf_size, LOG_FORMAT, 2);
+	if ((f = fopen(buf, "w+")) == NULL)
+		return -1;
+
+	lib_log(f, "TESTING", "This is a simple line.");
+	int ar_size = 24, ar[] = {20, 1, 99, 7, 4, 3, 5, 21, 43, 44, 55, 56, 54, 33, 27, 38, 86, 57, 75, 32, 11, 1, 12, 21};
+
+	lib_trace_array(f, "TRACE", ar, ar_size);
+	lib_error("Fake crash.");
+
+	if (fclose(f) != 0)
+		return -1;
 
 	return 0;
 }

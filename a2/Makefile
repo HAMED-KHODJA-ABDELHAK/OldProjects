@@ -22,7 +22,7 @@ AR:=ar -rf
 RANLIB:=ranlib
 LIB_NAME:=shared.a #Name only.
 LIB_ARC:=$(EXE_DIR)/$(LIB_NAME) #Final directory + name.
-LIB_OBJS:=$(subst .a,.o,$(LIB_NAME)) # Objects required.
+LIB_OBJS:=$(subst .a,.o,$(LIB_NAME)) file_ops.o # Objects required.
 LIBS:=$(LIB_ARC) -lcunit 
 
 # Generic files to clean.

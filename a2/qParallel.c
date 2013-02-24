@@ -25,20 +25,21 @@
 /* Project Headers */
 #include "mpi.h"
 #include "shared.h"
+#include "file_ops.h"
 
 /******************* Constants/Macros *********************/
 #define BUF_SIZE 			1000000
 #define GATHER_SCALE 		3
 #define QDEBUG 				1 // Enable this line for tracing code.
+#define LOG_SIZE			100
 
 /******************* Type Definitions *********************/
 
 
 /**************** Static Data Definitions *****************/
-#ifdef QDEBUG
-/* Buffer used in tracing. */
-static char buf[BUF_SIZE];
-#endif
+/* Log file per process, buf used for anything not an array trace. */
+static FILE *log;
+static char log_buf[LOG_SIZE];
 
 /****************** Static Functions **********************/
 
@@ -79,7 +80,8 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 		/* Select and broadcast pivot only to subgroup. */
 		if (info.member_num == 0) {
 			pivot = lib_select_pivot(*local, *local_size);
-			printf("ROUND: %d, GROUP: %d, pivot is: %d.\n", dimension-d, info.group_num, pivot);
+			snprintf(log_buf, LOG_SIZE, "ROUND: %d, GROUP: %d, pivot is: %d.\n", dimension-d, info.group_num, pivot);
+			lib_log(log, "PIVOT", log_buf);
 			send_pivot(pivot, &info);
 		} else {
 			MPI_Recv(&pivot, 1, MPI_INT, MPI_ANY_SOURCE, SEND_TAG, MPI_COMM_WORLD, &mpi_status);
@@ -90,8 +92,7 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 
 		/* Barrier here ensures all outstanding pivot recvs complete. */
 #ifdef QDEBUG
-		lib_trace_array(buf, BUF_SIZE, "PARTITIONED", *local, *local_size, id);
-		printf("%s", buf);
+		lib_trace_array(log, "PARTITIONED", *local, *local_size);
 		MPI_Barrier(MPI_COMM_WORLD);
 #else
 		MPI_Barrier(MPI_COMM_WORLD);
@@ -117,12 +118,10 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 
 		/* Ensure all partner exchanges complete before proceeding to the next round. */
 #ifdef QDEBUG
-		lib_trace_array(buf, BUF_SIZE, "RECV", recv, received, id);
-		printf("%s", buf);
+		lib_trace_array(log, "RECV", recv, recv_size);
 		MPI_Barrier(MPI_COMM_WORLD);
 
-		lib_trace_array(buf, BUF_SIZE, "UNION", *local, *local_size, id);
-		printf("%s", buf);
+		lib_trace_array(log, "UNION", *local, *local_size);
 		MPI_Barrier(MPI_COMM_WORLD);
 #else
 		MPI_Barrier(MPI_COMM_WORLD);
@@ -136,6 +135,7 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 int main(int argc, char **argv) {
 	int id = 0, world = 0, num_proc = 0, root_size = 0, recv_size = 0, local_size = 0;
 	int *root = NULL, *recv = NULL, *local = NULL;
+	char file[FILE_SIZE];
 	double start = 0.0;
 
 	/* Standard init for MPI, start timer after init. Get rank and size too. */
@@ -143,6 +143,11 @@ int main(int argc, char **argv) {
 	start = MPI_Wtime();
 	MPI_Comm_rank(MPI_COMM_WORLD, &id);
 	MPI_Comm_size(MPI_COMM_WORLD, &world);
+
+	/* Open log file, overwrite on each open. */
+	snprintf(file, FILE_SIZE, LOG_FORMAT, id);
+	if ((log = fopen(file, "w")) == NULL)
+		lib_error("MAIN: Could not open log file.");
 
 	/* Protection from invalid use. */
 	if (argc < 3)
@@ -173,22 +178,21 @@ int main(int argc, char **argv) {
 	 * Allocate a recv buf of root_size (though not likely needed) and a local size of n/p.
 	 * The recv buf accounts for the unlikely but possible lop sideded partitioning.
 	 */
-	recv = (int *)malloc(root_size * sizeof(int));
+	recv = (int *)malloc(num_proc * GATHER_SCALE * sizeof(int));
 	if (recv == NULL)
 		lib_error("MAIN: Can't allocate recv array on heap.");
 
-	local = (int *)malloc(root_size * sizeof(int));
+	local = (int *)malloc(num_proc * sizeof(int));
 	if (local == NULL)
 		lib_error("MAIN: Can't allocate local array on heap.");
-	recv_size = root_size;
+	recv_size = num_proc * GATHER_SCALE;
 	local_size = num_proc;
 
 	/* Scatter across the processes and then do hyper quicksort algorithm. */
 	MPI_Scatter(root, num_proc, MPI_INT, local, local_size, MPI_INT, ROOT, MPI_COMM_WORLD);
 
 #ifdef QDEBUG
-	lib_trace_array(buf, BUF_SIZE, "SCATTER", local, local_size, id);
-	printf("%s", buf);
+	lib_trace_array(log, "SCATTER", local, local_size);
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
@@ -197,8 +201,7 @@ int main(int argc, char **argv) {
 
 #ifdef QDEBUG
 	MPI_Barrier(MPI_COMM_WORLD);
-	lib_trace_array(buf, BUF_SIZE, "AFTERHYPER", local, local_size, id);
-	printf("%s", buf);
+	lib_trace_array(log, "HYPER", local, local_size);
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
@@ -224,8 +227,7 @@ int main(int argc, char **argv) {
 		lib_compress_array(world, root, root_size);
 
 #ifdef QDEBUG
-		lib_trace_array(buf, BUF_SIZE, "GATHER", root, root_size/GATHER_SCALE, id);
-		printf("%s", buf);
+		lib_trace_array(log, "GATHER", root, root_size/GATHER_SCALE);
 #endif
 
 		lib_write_file(OUTPUT, root, root_size/GATHER_SCALE);
@@ -237,6 +239,8 @@ int main(int argc, char **argv) {
 	/* May have been entirely deallocated if has no more at process. */
 	if (local != NULL)
 		free(local);
+
+	fclose(log);
 
 	MPI_Finalize();
 

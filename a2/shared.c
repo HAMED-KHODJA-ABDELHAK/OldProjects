@@ -54,42 +54,6 @@ void lib_generate_numbers(int vals[], int size) {
 }
 
 /*
- * Opens the filename passed in and reads size numbers into the vals array.
- */
-void lib_read_file(const char *filename, int *vals, const int size) {
-	// Note on size, I start it at -1 to compensate for the below while loop going one extra time.
-	int i;
-	FILE *f;
-
-	if ((f = fopen(filename, "r")) == NULL)
-		lib_error("READ: Failed to open file.");
-
-	for (i = 0; i < size; ++i)
-		fscanf(f, "%d", vals+i);
-
-	if (fclose(f) != 0)
-		lib_error("READ: Failed to close properly.");
-}
-
-/*
- * Function takes an array of values and prints them to a file.
- * Each integer on a separate line.
- */
-void lib_write_file(const char *filename, const int *vals, const int size) {
-	FILE *f;
-
-	if ((f = fopen(filename, "w")) == NULL)
-		lib_error("WRITE: Failed to open file.");
-
-	for (int i = 0; i < size; ++i)
-		fprintf(f, "%d\n", vals[i]);
-
-	if (fclose(f) != 0)
-		lib_error("WRITE: Failed to close properly.");
-}
-
-
-/*
  * Returns the pivot based on passed in array.
  * Currently: Median of three algorithm, select median of first, last and middle elements.
  */
@@ -207,31 +171,6 @@ void lib_array_union(int *a[], int *a_size, const int b[], const int b_size) {
 		*a = temp;
 		*a_size = new_size;
 	}
-}
-
-/*
- * Tracing function, takes a buffer of adequate size and traces the values in array.
- */
-void lib_trace_array(char *buf, int buf_size, char *tag, int array[], int size, int id) {
-	int count;
-
-	/* Using snprintf to avoid overflowing the buffer if too small. */
-	count = snprintf(buf, buf_size, "%s: I am %d. I have numbers: ", tag, id);
-	if ((buf_size - count) < 1)
-		lib_error("LIB_TRACE: Insufficient buffer for print.");
-
-	for (int i = 0; i < size; ++i) {
-		count += snprintf(buf+count, buf_size-count, "%d ", array[i]);
-		if ((buf_size-count) < 1)
-			lib_error("LIB_TRACE: Insufficient buffer for print.");
-	}
-
-	count += snprintf(buf+count, buf_size-count, "\n");
-	if ((buf_size-count) < 1)
-		lib_error("LIB_TRACE: Insufficient buffer for print.");
-
-	/* Ensure always null terminated, only catches if buffer too small. */
-	buf[buf_size-1] = '\0';
 }
 
 /*

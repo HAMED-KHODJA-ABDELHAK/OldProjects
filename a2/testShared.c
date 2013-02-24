@@ -20,7 +20,7 @@
 
 
 /**************** Static Data Definitions *****************/
-static FILE *f;
+
 
 /****************** Static Functions **********************/
 
@@ -33,8 +33,6 @@ static FILE *f;
  * Suite initialization function run before each test.
  */
 int suite_init(void) {
-	if ((f = fopen(TEMP_FILE, "w+")) == NULL)
-		return -1;
 
 	return 0;
 }
@@ -42,10 +40,6 @@ int suite_init(void) {
 /* The suite cleanup function.
  */
 int suite_clean(void) {
-	if (fclose(f) != 0)
-		return -1;
-
-	remove(TEMP_FILE);
 
 	return 0;
 }
@@ -72,22 +66,6 @@ void test_compare_less(void) {
 void test_compare_more(void) {
 	int a = 20, b = 9;
 	CU_ASSERT(lib_compare(&a, &b) > 0);
-}
-
-/*
- * Test the read and write files. Here I've assumed that read and write
- * only work together else they fail.
- */
-void test_read_write_file(void) {
-	int gen[AR_SIZE], read[AR_SIZE];
-
-	lib_generate_numbers(gen, AR_SIZE);
-	lib_write_file(TEMP_FILE, gen, AR_SIZE);
-	lib_read_file(TEMP_FILE, read, AR_SIZE);
-
-	for (int i = 0; i < AR_SIZE; ++i) {
-		CU_ASSERT(gen[i] == read[i]);
-	}
 }
 
 /*
@@ -193,17 +171,6 @@ void test_array_union(void) {
 /*
  * Test to exercise the array tracing function.
  */
-void test_trace_array(void) {
-	int buf_size = 200, id = 2, ar_size = 5, ar[] = {20, 44, 1, 99, 7};
-	char buf[buf_size], tag[] = "TEST", expected[] = "TEST: I am 2. I have numbers: 20 44 1 99 7 \n";
-
-	lib_trace_array(buf, buf_size, tag, ar, ar_size, id);
-	CU_ASSERT_STRING_EQUAL(buf, expected);
-}
-
-/*
- * Test to exercise the array tracing function.
- */
 void test_subgroup_info(void) {
 	int dimension = 2, id = 6;
 	subgroup_info_t actual = {0, 0, 0 ,0, id}, expected = {4, 1, 2, 4, id};
@@ -251,7 +218,6 @@ int main() {
 	   (NULL == CU_add_test(sharedSuite, "Compare: Equal", test_compare_equal)) ||
 	   (NULL == CU_add_test(sharedSuite, "Compare: Less", test_compare_less)) ||
 	   (NULL == CU_add_test(sharedSuite, "Compare: Greater", test_compare_more)) ||
-	   (NULL == CU_add_test(sharedSuite, "Write/Read", test_read_write_file)) ||
 	   (NULL == CU_add_test(sharedSuite, "Select Pivot, Odd", test_select_pivot_odd)) ||
 	   (NULL == CU_add_test(sharedSuite, "Select Pivot, Even", test_select_pivot_even)) ||
 	   (NULL == CU_add_test(sharedSuite, "Swap Ints", test_swap_ints)) ||
@@ -259,7 +225,6 @@ int main() {
 	   (NULL == CU_add_test(sharedSuite, "Power Function, Odd", test_power_odd)) ||
 	   (NULL == CU_add_test(sharedSuite, "Partition Array", test_partition_array)) ||
 	   (NULL == CU_add_test(sharedSuite, "Array Union", test_array_union)) ||
-	   (NULL == CU_add_test(sharedSuite, "Array Trace", test_trace_array)) ||
 	   (NULL == CU_add_test(sharedSuite, "Subgroup Info", test_subgroup_info)) ||
 	   (NULL == CU_add_test(sharedSuite, "Compress Array", test_compress_array))
       )
