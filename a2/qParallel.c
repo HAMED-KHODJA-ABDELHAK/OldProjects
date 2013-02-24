@@ -206,13 +206,15 @@ int main(int argc, char **argv) {
 	/* Copy to front of root the sorted local set.
 	 * Gather back to root from each processor, write directly into root array, offset by received size. */
 	if (id == ROOT) {
+		int rem = num_proc * world - local_size;
 		memcpy(root, local, local_size*sizeof(int));
 		root_size = local_size;
 
 		for (int r_id = 1; r_id < world; ++r_id) {
-			MPI_Recv(root+root_size, num_proc*world, MPI_INT, r_id, r_id, MPI_COMM_WORLD, &mpi_status);
+			MPI_Recv(root+root_size, rem, MPI_INT, r_id, r_id, MPI_COMM_WORLD, &mpi_status);
 			MPI_Get_count(&mpi_status, MPI_INT, &received);
 			root_size += received;
+			rem -= received;
 		}
 	} else {
 		MPI_Isend(local, local_size, MPI_INT, ROOT, id, MPI_COMM_WORLD, &mpi_request);
