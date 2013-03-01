@@ -8,21 +8,20 @@
 
 /******************* Constants/Macros *********************/
 /* Flag to pass in to generate new input.txt */
-#define GENERATE_FLAG 		"gen"
+#define GENERATE_FLAG       "gen"
 /* Max value of randomly generated numbers */
-#define MAX_VAL 		1000
+#define MAX_VAL             1000
 /* Root ID */
-#define ROOT 			0
-
+#define ROOT                0
 
 /******************* Type Declarations ********************/
 /* Struct contains information on a subgroup in a hypercube. */
 typedef struct subgroup_info_s {
-	int group_size; /* Size of subgroup. */
-	int group_num; /* Number of the group, starts at 0. */
-	int member_num; /* Position in the relevant subgroup, starts at 0. */
-	int partner; /* Partner to exchange data with during the hypercube round. */
-	int world_id; /* ID of this process in the MPI_COMM_WORLD group. */
+    int group_size; /* Size of subgroup. */
+    int group_num; /* Number of the group, starts at 0. */
+    int member_num; /* Position in the relevant subgroup, starts at 0. */
+    int partner; /* Partner to exchange data with during the hypercube round. */
+    int world_id; /* ID of this process in the MPI_COMM_WORLD group. */
 } subgroup_info_t;
 
 /********************** Prototypes ************************/
@@ -83,4 +82,3 @@ void lib_array_union(int *a[], int *a_size, const int b[], const int b_size);
 void lib_compress_array(int world, int root[], int root_size);
 
 #endif /* _SHARED_H_ */
-
