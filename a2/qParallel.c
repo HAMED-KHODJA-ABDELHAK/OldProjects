@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
 		lib_compress_array(world, root, root_size);
 
 #ifdef QDEBUG
-		lib_trace_array(buf, BUF_SIZE, "GATHER", root, root_size/2, id);
+		lib_trace_array(buf, BUF_SIZE, "COMPRESS", root, root_size/2, id);
 		printf("%s", buf);
 #endif
 
