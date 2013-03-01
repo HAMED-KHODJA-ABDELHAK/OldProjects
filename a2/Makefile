@@ -23,7 +23,7 @@ RANLIB:=ranlib
 LIB_NAME:=shared.a #Name only.
 LIB_ARC:=$(EXE_DIR)/$(LIB_NAME) #Final directory + name.
 LIB_OBJS:=array_ops.o file_ops.o # Objects required.
-LIBS:=$(LIB_ARC) #-lcunit 
+LIBS:=$(LIB_ARC) -lcunit 
 
 # Generic files to clean.
 FILES_TO_CLEAN:=*.o *.a *.out *.exe *~ temp.* *.gcov *.gcda *.gcno
@@ -33,7 +33,7 @@ EXES = \
 	$(EXE_DIR)/qSerial \
 	$(EXE_DIR)/qParallel \
 	$(EXE_DIR)/experiment \
-#	$(EXE_DIR)/test_array_ops \
+	$(EXE_DIR)/test_array_ops \
 
 # Custom rules, define how to link and compile respectively.
 $(EXE_DIR)/%: %.o 

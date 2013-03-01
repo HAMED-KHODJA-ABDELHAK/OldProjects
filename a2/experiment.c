@@ -12,6 +12,8 @@
 #include "mpi.h"
 #include "array_ops.h"
 #include "file_ops.h"
+#include "CUnit/Basic.h"
+
 
 /******************* Constants/Macros *********************/
 
@@ -22,7 +24,7 @@
 /**************** Static Data Definitions *****************/
 
 
-/****************** Static Functions **********************/
+/****************** Test Functions **********************/
 
 
 /**************** Global Data Definitions *****************/
@@ -135,7 +137,7 @@ int select_index(int vals[], int left, int right, int pos) {
 //         sub_right = sub_left + 5;
 //
 //         if (sub_right > right)
-//        	 sub_right = right;
+//           sub_right = right;
 //
 //         median_index = select_index(vals, sub_left, sub_right, 2); //alternatively, use a faster method that works on lists of size 5
 //         //move the median to a contiguous block at the beginning of the list
@@ -145,31 +147,64 @@ int select_index(int vals[], int left, int right, int pos) {
 //     return select_index(vals, left, left+ num_medians, num_medians / 2);
 //}
 
-/**
- * Main loop of the function.
+/*
+ * Suite initialization function run before each test.
  */
-//int main(int argc, char **argv) {
-int main(void) {
-    FILE *f;
-    int buf_size = 200;
-    char buf[buf_size];
+int suite_init(void) {
 
-    snprintf(buf, buf_size, LOG_FORMAT, 2);
-    if ((f = fopen(buf, "w+")) == NULL)
-        return -1;
+    return 0;
+}
 
-    lib_log(f, "TESTING", "This is a simple line.");
+/* The suite cleanup function.
+ */
+int suite_clean(void) {
+
+    return 0;
+}
+
+/*
+ * Compare function, equal case.
+ */
+void test_partition_first(void) {
     int ar_size = 10, ar[] = {2, 5, 8, 9, 1, 20, 4, 7, 16, 11};
 
     int rc = lib_index_partition(4, ar, ar+9);
     //int rc = select_index(ar, 0, 9, 4);
     printf("%d", ar[rc]);
 
-    lib_trace_array(f, "TRACE", ar, ar_size);
-
-    if (fclose(f) != 0)
-        return -1;
-
-    return 0;
+    lib_trace_array(stdout, "TRACE", ar, ar_size);
 }
 
+/* The main() function for setting up and running the tests.
+ * Returns a CUE_SUCCESS on successful running, another
+ * CUnit error code on failure.
+ */
+int main() {
+   CU_pSuite sharedSuite = NULL;
+
+   /* Initialize the CUnit test registry. */
+   if (CUE_SUCCESS != CU_initialize_registry())
+      return CU_get_error();
+
+   /* Add a suite to the registry. */
+   sharedSuite = CU_add_suite("Shared Suite", suite_init, suite_clean);
+   if (NULL == sharedSuite) {
+      CU_cleanup_registry();
+      return CU_get_error();
+   }
+
+   /* Add the tests to the suite. */
+   if (
+       (NULL == CU_add_test(sharedSuite, "Index Partition: First.......", test_partition_first))
+      )
+   {
+      CU_cleanup_registry();
+      return CU_get_error();
+   }
+
+   /* Run all tests using the CUnit Basic interface */
+   CU_basic_set_mode(CU_BRM_VERBOSE);
+   CU_basic_run_tests();
+   CU_cleanup_registry();
+   return CU_get_error();
+}
