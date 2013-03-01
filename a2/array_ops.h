@@ -7,31 +7,24 @@
 /* Project Headers */
 
 /******************* Constants/Macros *********************/
-/* Input and output filenames. */
-#define INPUT 			"input.txt"
-#define OUTPUT 			"output.txt"
 /* Flag to pass in to generate new input.txt */
-#define GENERATE_FLAG 	"gen"
+#define GENERATE_FLAG       "gen"
 /* Max value of randomly generated numbers */
-#define MAX_VAL 		100
+#define MAX_VAL             1000
 /* Root ID */
-#define ROOT 			0
-/* Maximum dimension of the hypercube */
-#define MAX_DIM 		3
-/* A tag for use in the send and recv */
-#define SEND_TAG 		0
+#define ROOT                0
 
 /******************* Type Declarations ********************/
+/* Struct contains information on a subgroup in a hypercube. */
 typedef struct subgroup_info_s {
-	int group_size;
-	int group_num;
-	int member_num;
-	int partner;
-	int world_id;
+    int group_size; /* Size of subgroup. */
+    int group_num; /* Number of the group, starts at 0. */
+    int member_num; /* Position in the relevant subgroup, starts at 0. */
+    int partner; /* Partner to exchange data with during the hypercube round. */
+    int world_id; /* ID of this process in the MPI_COMM_WORLD group. */
 } subgroup_info_t;
 
 /********************** Prototypes ************************/
-
 /*
  * Generic error function, prints out the error and terminates execution.
  */
@@ -46,17 +39,6 @@ int lib_compare(const void *a, const void *b);
  * Function generates size random numbers between 0 and MAX_VAL. All values put in vals array.
  */
 void lib_generate_numbers(int vals[], int size);
-
-/*
- * Opens the filename passed in and reads size numbers into the vals array.
- */
-void lib_read_file(const char *filename, int *vals, const int size);
-
-/*
- * Function takes an array of values and prints them to a file.
- * Each integer on a separate line.
- */
-void lib_write_file(const char *filename, const int *vals, const int size);
 
 /*
  * Returns the pivot based on passed in array.
@@ -94,15 +76,9 @@ void lib_subgroup_info(const int dimension, subgroup_info_t *info);
 void lib_array_union(int *a[], int *a_size, const int b[], const int b_size);
 
 /*
- * Tracing function, takes a buffer of adequate size and traces the values in array.
- */
-void lib_trace_array(char *buf, int buf_size, char *tag, int array[], int size, int id);
-
-/*
  * Once gathered, root array contains a lot of empty values as -1.
  * Compress down array to be contiguous.
  */
 void lib_compress_array(int world, int root[], int root_size);
 
 #endif /* _SHARED_H_ */
-
