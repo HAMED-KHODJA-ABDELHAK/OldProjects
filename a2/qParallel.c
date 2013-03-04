@@ -92,7 +92,7 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
         }
 
         /* Partition the array. */
-        lib_partition_array(pivot, *local, *local_size, &lt_size, &gt_size);
+        lib_partition_by_pivot_val(pivot, *local, *local_size, &lt_size, &gt_size);
 
         /* Barrier here ensures all outstanding pivot recvs complete. */
 #ifdef QDEBUG

@@ -55,7 +55,24 @@ void lib_swap(int *a, int *b);
  * Partition the passed in array in place. All elements at the front will be less than or equal to pivot.
  * All elements at back will be strictly greater than pivot.
  */
-void lib_partition_array(int pivot, int vals[], const int vals_size, int *lt_size, int *gt_size);
+void lib_partition_by_pivot_val(int pivot, int vals[], const int vals_size, int *lt_size, int *gt_size);
+
+/*
+ * Partition the passed in array in place. All elements at the front will be less than or equal to pivot.
+ * All elements at back will be strictly greater than pivot. Pivot will be in the middle and index will be returned.
+ */
+int lib_partition_by_pivot_index(int pivot_index, int *left, int *right);
+
+/*
+ * Select the kth largest element from the range of values in the array.
+ * Starts at k = 1..N.
+ */
+int lib_select_kth(int kth, int *left, int *right);
+
+/* This function groups values into blocks of five and then selects a median.
+ * All such medians are collected at the front and the median of this group is selected as the true median.
+ */
+int lib_median_of_medians(int *vals, int left, int right);
 
 /*
  * Integer power function, takes log(n) steps to compute.

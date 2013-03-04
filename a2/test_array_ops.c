@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 /* Project Headers */
 #include "CUnit/Basic.h"
@@ -14,13 +15,14 @@
 
 /******************* Constants/Macros *********************/
 #define TEMP_FILE 		"temp.txt"
-#define AR_SIZE			10
+#define VALS_SIZE		20
 
 /******************* Type Definitions *********************/
 
 
 /**************** Static Data Definitions *****************/
-
+static int vals_orig[] = {62, 58, 41, 85, 39, 10, 64, 69, 41, 5, 98, 27, 2, 97, 30, 22, 39, 94, 56, 21};
+static int vals[VALS_SIZE];
 
 /****************** Static Functions **********************/
 
@@ -33,6 +35,7 @@
  * Suite initialization function run before each test.
  */
 int suite_init(void) {
+	srand(time(NULL));
 
     return 0;
 }
@@ -103,8 +106,8 @@ void test_swap_ints(void) {
  * Test power function when exponent is even.
  */
 void test_power_even(void) {
-    int base = 2, exp = 10, expected = 1024;
-    int actual = lib_power(base, exp);
+    int base = 2, exp = 10, expected = 1024, actual;
+    actual = lib_power(base, exp);
 
     CU_ASSERT(actual == expected);
 }
@@ -127,7 +130,7 @@ void test_partition_array(void) {
     int expected_data[] = {33, 33, 10, 22, 900, 88, 61, 77, 99, 100};
     int actual_lt = 0, actual_gt = 0, expected_lt = 4, expected_gt = 6;
 
-    lib_partition_array(pivot, orig_data, size, &actual_lt, &actual_gt);
+    lib_partition_by_pivot_val(pivot, orig_data, size, &actual_lt, &actual_gt);
 
     CU_ASSERT(actual_lt == expected_lt)
     CU_ASSERT(actual_gt == expected_gt);
@@ -195,6 +198,111 @@ void test_compress_array(void) {
         CU_ASSERT(vals[i] != -1);
 }
 
+/*
+ * Test the partitioning of the array when pivot is first element.
+ */
+void test_partition_first(void) {
+    /* Expected position and values after partitioning. */
+    int pos = 0, e_pos = 13, e_vals[] = {30, 58, 41, 21, 39, 10, 56, 39, 41, 5, 22, 27, 2, 62, 97, 98, 69, 94, 64, 85};
+    memcpy(vals, vals_orig, VALS_SIZE*sizeof(int));
+
+    pos = lib_partition_by_pivot_index(0, vals, vals+VALS_SIZE-1);
+
+    CU_ASSERT(pos == e_pos);
+    for (int i = 0; i < VALS_SIZE; ++i)
+        CU_ASSERT(vals[i] == e_vals[i]);
+}
+
+/*
+ * Test the partitioning of the array when pivot is last element.
+ */
+void test_partition_last(void) {
+    /* Expected position and values after partitioning. */
+    int pos = 0, e_pos = 3, e_vals[] = {10, 2, 5, 21, 39, 85, 64, 69, 41, 41, 98, 27, 58, 97, 30, 22, 39, 94, 56, 62};
+    memcpy(vals, vals_orig, VALS_SIZE*sizeof(int));
+
+    pos = lib_partition_by_pivot_index(VALS_SIZE-1, vals, vals+VALS_SIZE-1);
+
+    CU_ASSERT(pos == e_pos);
+    for (int i = 0; i < VALS_SIZE; ++i)
+        CU_ASSERT(vals[i] == e_vals[i]);
+}
+
+/*
+ * Test the partitioning of the array when pivot is the middle-ish element.
+ */
+void test_partition_mid(void) {
+    /* Expected position and values after partitioning. */
+    int pos = 0, e_pos = 10, e_vals[] = {27, 21, 41, 39, 39, 10, 22, 30, 2, 5, 41, 98, 62, 97, 69, 64, 85, 94, 56, 58};
+    memcpy(vals, vals_orig, VALS_SIZE*sizeof(int));
+
+    pos = lib_partition_by_pivot_index(8, vals, vals+VALS_SIZE-1);
+
+    CU_ASSERT(pos == e_pos);
+    for (int i = 0; i < VALS_SIZE; ++i)
+        CU_ASSERT(vals[i] == e_vals[i]);
+}
+
+/*
+ * Test the partitioning of the array when pivot is the smallest value.
+ */
+void test_partition_smallest_val(void) {
+    /* Expected position and values after partitioning. */
+    int pos = 0, e_pos = 0, e_vals[] = {2, 58, 41, 85, 39, 10, 64, 69, 41, 5, 98, 27, 62, 97, 30, 22, 39, 94, 56, 21};
+    memcpy(vals, vals_orig, VALS_SIZE*sizeof(int));
+
+    pos = lib_partition_by_pivot_index(12, vals, vals+VALS_SIZE-1);
+
+    CU_ASSERT(pos == e_pos);
+    for (int i = 0; i < VALS_SIZE; ++i)
+        CU_ASSERT(vals[i] == e_vals[i]);
+}
+
+/*
+ * Test the partitioning of the array when pivot is the largest value.
+ */
+void test_partition_largest_val(void) {
+    /* Expected position and values after partitioning. */
+    int pos = 0, e_pos = 19, e_vals[] = {21, 58, 41, 85, 39, 10, 64, 69, 41, 5, 62, 27, 2, 97, 30, 22, 39, 94, 56, 98};
+    memcpy(vals, vals_orig, VALS_SIZE*sizeof(int));
+
+    pos = lib_partition_by_pivot_index(10, vals, vals+VALS_SIZE-1);
+
+    CU_ASSERT(pos == e_pos);
+    for (int i = 0; i < VALS_SIZE; ++i)
+        CU_ASSERT(vals[i] == e_vals[i]);
+}
+
+/*
+ * Test the partitioning of the array when pivot is first element.
+ */
+void test_select_index(void) {
+    /* Expected position and values after partitioning. */
+    int pos = 0, e_val = 41, e_pos = 9;
+    memcpy(vals, vals_orig, VALS_SIZE*sizeof(int));
+
+    /* Get the smallest value. */
+    pos = lib_select_kth(10, vals, vals+VALS_SIZE-1);
+
+    CU_ASSERT(vals[pos] == e_val);
+    CU_ASSERT(pos == e_pos);
+}
+
+/*
+ * Test the partitioning of the array when pivot is first element.
+ */
+void test_median_of_medians(void) {
+    /* Expected position and values after partitioning. */
+    int pos = 0, e_val = 41, e_pos = 2;
+    memcpy(vals, vals_orig, VALS_SIZE*sizeof(int));
+
+    /* Get the smallest value. */
+    pos = lib_median_of_medians(vals, 0, 19);
+
+    CU_ASSERT(vals[pos] == e_val);
+    CU_ASSERT(pos == e_pos);
+}
+
 /* The main() function for setting up and running the tests.
  * Returns a CUE_SUCCESS on successful running, another
  * CUnit error code on failure.
@@ -215,18 +323,25 @@ int main() {
 
    /* Add the tests to the suite. */
    if (
-       (NULL == CU_add_test(sharedSuite, "Compare: Equal.......", test_compare_equal)) ||
-       (NULL == CU_add_test(sharedSuite, "Compare: Less........", test_compare_less)) ||
-       (NULL == CU_add_test(sharedSuite, "Compare: Greater.....", test_compare_more)) ||
-       (NULL == CU_add_test(sharedSuite, "Select Pivot, Odd....", test_select_pivot_odd)) ||
-       (NULL == CU_add_test(sharedSuite, "Select Pivot, Even...", test_select_pivot_even)) ||
-       (NULL == CU_add_test(sharedSuite, "Swap Ints............", test_swap_ints)) ||
-       (NULL == CU_add_test(sharedSuite, "Power Function, Even.", test_power_even)) ||
-       (NULL == CU_add_test(sharedSuite, "Power Function, Odd..", test_power_odd)) ||
-       (NULL == CU_add_test(sharedSuite, "Partition Array......", test_partition_array)) ||
-       (NULL == CU_add_test(sharedSuite, "Array Union..........", test_array_union)) ||
-       (NULL == CU_add_test(sharedSuite, "Subgroup Info........", test_subgroup_info)) ||
-       (NULL == CU_add_test(sharedSuite, "Compress Array.......", test_compress_array))
+       (NULL == CU_add_test(sharedSuite, "Compare: Equal..............", test_compare_equal)) ||
+       (NULL == CU_add_test(sharedSuite, "Compare: Less...............", test_compare_less)) ||
+       (NULL == CU_add_test(sharedSuite, "Compare: Greater............", test_compare_more)) ||
+       (NULL == CU_add_test(sharedSuite, "Select Pivot, Odd...........", test_select_pivot_odd)) ||
+       (NULL == CU_add_test(sharedSuite, "Select Pivot, Even..........", test_select_pivot_even)) ||
+       (NULL == CU_add_test(sharedSuite, "Swap Ints...................", test_swap_ints)) ||
+       (NULL == CU_add_test(sharedSuite, "Power Function, Even........", test_power_even)) ||
+       (NULL == CU_add_test(sharedSuite, "Power Function, Odd.........", test_power_odd)) ||
+       (NULL == CU_add_test(sharedSuite, "Value Partitiony............", test_partition_array)) ||
+       (NULL == CU_add_test(sharedSuite, "Array Union.................", test_array_union)) ||
+       (NULL == CU_add_test(sharedSuite, "Subgroup Info...............", test_subgroup_info)) ||
+       (NULL == CU_add_test(sharedSuite, "Compress Array..............", test_compress_array)) ||
+       (NULL == CU_add_test(sharedSuite, "Index Partition: First......", test_partition_first)) ||
+       (NULL == CU_add_test(sharedSuite, "Index Partition: Mid........", test_partition_mid)) ||
+       (NULL == CU_add_test(sharedSuite, "Index Partition: Last.......", test_partition_last)) ||
+       (NULL == CU_add_test(sharedSuite, "Index Partition: Small Val..", test_partition_smallest_val)) ||
+       (NULL == CU_add_test(sharedSuite, "Index Partition: Large Val..", test_partition_largest_val)) ||
+       (NULL == CU_add_test(sharedSuite, "Select Index: First.........", test_select_index)) ||
+       (NULL == CU_add_test(sharedSuite, "Median of Medians: First....", test_median_of_medians))
       )
    {
       CU_cleanup_registry();

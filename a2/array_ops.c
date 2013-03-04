@@ -96,27 +96,111 @@ void lib_swap(int *a, int *b) {
 
 /*
  * Partition the passed in array in place. All elements at the front will be less than or equal to pivot.
- * All elements at back will be strictly greater than pivot.
+ * All elements at back will be strictly greater than pivot. Pivot value passed in, not necessarily present.
  */
-void lib_partition_array(int pivot, int vals[], const int vals_size, int *lt_size, int *gt_size) {
+void lib_partition_by_pivot_val(int pivot, int vals[], const int vals_size, int *lt_size, int *gt_size) {
     int *left = vals, *right = vals + vals_size-1;
     *lt_size = 0;
 
     /* Done when left and right cross makes difference negative. */
-    while ((right-left) > 0) {
+    while (left < right) {
         /* Scan until left points to larger than pivot and right points to less than pivot.  */
-        while ((right-left) > 0 && *left <= pivot) {
+        while (left < right && *left <= pivot) {
             ++left;
             ++*lt_size;
         }
-        while ((right-left) > 0 && *right > pivot) {
+        while (left < right && *right > pivot) {
             --right;
         }
-        if ((right-left) > 0)
+        if (left < right)
             lib_swap(left, right);
     }
 
     *gt_size = vals_size - *lt_size;
+}
+
+/*
+ * Partition the passed in array in place. All elements at the front will be less than or equal to pivot.
+ * All elements at back will be strictly greater than pivot. Pivot value is at pivot_index in the array.
+ */
+int lib_partition_by_pivot_index(int pivot_index, int *left, int *right) {
+    /* Store them starting at left and moving right. */
+    int *store_l = left, *store_r = right;
+	int pivot_val = left[pivot_index];
+
+	/* Move pivot to farthest left value in array. */
+    lib_swap(left+pivot_index, left);
+
+    while (left < right) {
+        /* Scan until left points to larger than pivot and right points to less than pivot.  */
+        while (*left <= pivot_val && left != store_r)
+            ++left;
+        while (*right > pivot_val)
+            --right;
+
+        if (left < right)
+        	lib_swap(left, right);
+    }
+
+    /* Right points to position of pivot. */
+	lib_swap(right, store_l);
+
+    /* Return index of pivot in partitioned array. */
+    return right-store_l;
+}
+
+/*
+ * Select the kth largest element from the range of values in the array, where 1 would be smallest and n the largest.
+ * Starts at k = 1..N.
+ */
+int lib_select_kth(int kth, int *left, int *right) {
+    int new_pivot_index = 0, rand_index = 0, pivot_dist = -1;
+    int *store_l = left;
+
+    /* Until we get to kth, select a random index and partition. Then we get new pivot index. */
+    while (1) {
+        rand_index = rand() % (right-left+1);
+        new_pivot_index = lib_partition_by_pivot_index(rand_index, left, right);
+        pivot_dist = new_pivot_index+1;
+
+        /* If pivot dist = kth, we are there. If > kth, we move right pointer left. Else left pointer goes right. */
+        if (pivot_dist == kth)
+        	break;
+        else if (pivot_dist > kth)
+            right = left+new_pivot_index-1;
+        else {
+            kth -= pivot_dist;
+            left += new_pivot_index+1;
+        }
+    }
+
+	/* Return index of kth in original array, should be kth-1. */
+    return left+new_pivot_index - store_l;
+}
+
+/* This function groups values into blocks of five and then selects a median.
+ * All such medians are collected at the front and the median of this group is selected as the true median.
+ */
+int lib_median_of_medians(int *vals, int left, int right) {
+     int num_medians = (right+1-left)/5;
+     int sub_left, sub_right, median_index;
+
+     for (int i = 0; i < num_medians; ++i) {
+         /* Get the median of the five-element subgroup. */
+         sub_left = left + i*5;
+         sub_right = sub_left + 4;
+
+         /* Ensure we never leave bounds. */
+         if (sub_right > right)
+           sub_right = right;
+
+         median_index = lib_select_kth(3, vals+sub_left, vals+sub_right);
+         /* Move the median to front of the list. */
+         lib_swap(vals+left+i, vals+sub_left+median_index);
+     }
+
+     /* Select the median from our medians at the front of list. */
+     return lib_select_kth((num_medians/2)+1, vals+left, vals+num_medians-1);
 }
 
 /*
