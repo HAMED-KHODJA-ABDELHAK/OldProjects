@@ -50,7 +50,7 @@
 #include "file_ops.h"
 
 /******************* Constants/Macros *********************/
-#define GATHER_SCALE 		2
+#define GATHER_SCALE 		3
 #define QDEBUG 				1 // Enable this line for tracing code.
 #define LOG_SIZE			100
 /* Maximum dimension of the hypercube */
