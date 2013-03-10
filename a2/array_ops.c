@@ -299,6 +299,7 @@ void lib_select_pivots_from_medians(const int dimension, int *pivots, const int 
 
 /* This function groups values into blocks of five and then selects a median.
  * All such medians are collected at the front and the median of this group is selected as the true median.
+ * The position relative the vals pointer is returned, not value.
  */
 int lib_median_of_medians(int *vals, int left, int right) {
      int num_medians = (right+1-left)/5;
@@ -318,6 +319,7 @@ int lib_median_of_medians(int *vals, int left, int right) {
          lib_swap(vals+left+i, vals+sub_left+median_index);
      }
 
-     /* Select the median from our medians at the front of list. */
-     return lib_select_kth((num_medians/2)+1, vals+left, vals+num_medians-1);
+     /* Quick sort the small list of medians, then pick the middle median. */
+     qsort(vals, num_medians, sizeof(int), lib_compare);
+     return (num_medians/2) + 1;
 }
