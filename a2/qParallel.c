@@ -38,7 +38,7 @@
 /******************* Constants/Macros *********************/
 #define BUF_SIZE 			1000000
 #define GATHER_SCALE 		1.5
-//#define QDEBUG 				1 // Enable this line for tracing code.
+#define QDEBUG 				1 // Enable this line for tracing code.
 #define LOG_SIZE			100
 /* Maximum dimension of the hypercube */
 #define MAX_DIM 			3
