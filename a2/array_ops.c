@@ -182,21 +182,11 @@ int lib_power(const int base, const unsigned int exp) {
  * The root of any given subgroup has d 0's starting from the right.
  * That basically means it is some modulo, I'll also return the subgroup and it's partner.
  */
-void lib_subgroup_info(const int max_dimension, const int dimension, subgroup_info_t *info) {
+void lib_subgroup_info(const int dimension, subgroup_info_t *info) {
     info->group_size = lib_power(2, dimension);
     info->group_num = info->world_id / info->group_size;
     info->member_num = info->world_id % info->group_size;
     info->partner = info->world_id ^ (1<<(dimension-1));
-
-    /* Mapping function, maps first round to 0 and subsequent rounds onto right pivots.
-     * Function is (max_d-d)^2 + group. */
-    info->pivot_index = max_dimension-dimension;
-    info->pivot_index *= info->pivot_index;
-
-    if ((max_dimension - dimension) > 1)
-    	info->pivot_index -= 1;
-
-    info->pivot_index += info->group_num;
 }
 
 /*

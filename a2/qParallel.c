@@ -1,25 +1,16 @@
 /**
- * This program is the hyper quicksort parallel implementation.
- * This program implements the algorithm as described in the book.
- * There are many library functions used not in this file, see array_ops.c and file_ops.c for implementations.
+ * Reference implementation of quicksort with serial implementation as baseline.
+ * This program will only serially calculate the quicksort of the input file.
+ * If you don't know the number of words in your input: cat input.txt | wc, second number is word count.
+ * See mylib.h/.c for functions not in this file.
  *
- * Use command: bsub -I -q COMP428 -n <tasks> mpirun -srun ./demo/qParallel <numbers> <mode>
+ * Use command: bsub -I -q COMP428 -n1 mpirun -srun ./demo/parallel <work> <mode>
  *
- * Arguments:
- * tasks: The amount of number of processes to start. Only 2, 4 and 8 are acceptable.
- * numbers: Amount of integers to put in generated file. Only needed if mode set to 'gen'.
+ * Arguments to serial:
+ * work: The amount of numbers per process, total = work * world size.
  * mode: Flag that optionally makes master generate a new input.
- *      -> Use "gen" to generate new input.
- *      -> To read from input.txt, simply omit 'mode' and 'numbers'.
- *
- * Input format:
- * I accept any file that is formatted so every integer is separated by a comma. Any amount of whitespace
- * between comma and next integer is allowable. Example: 10, 20,\n30,    50,
- *
- * Logging:
- * I have created a rudimentary logging framework. It traces throughout execution the state of the arrays.
- * It is disabled by default, remove the comment on QDEBUG line and recompile to enable.
- *
+ * 		-> Use "gen" to generate new input.
+ * 		-> Use "read" to use existing input.txt.
  * TODO:
  *  -> Resolve outstanding scaling issue. Memory limited?
  *  -> Resolve CUnit issue on cirrus.
@@ -37,7 +28,7 @@
 
 /******************* Constants/Macros *********************/
 #define BUF_SIZE 			1000000
-#define GATHER_SCALE 		1.5
+#define GATHER_SCALE 		1.2
 #define QDEBUG 				1 // Enable this line for tracing code.
 #define LOG_SIZE			100
 /* Maximum dimension of the hypercube */
@@ -45,7 +36,6 @@
 /* A tag for use in the send and recv */
 #define PIVOT_TAG			0
 #define EXCHANGE_TAG 		1
-#define MAX_PIVOTS			8
 
 /******************* Type Definitions *********************/
 
@@ -62,20 +52,6 @@ static char log_buf[LOG_SIZE];
 
 
 /****************** Global Functions **********************/
-/*
- * I only allow program to run if size is of a hypercube with dimension 1, 2 or 3.
- * If not right size, return 0 and fail. Else return the dimension.
- */
-int determine_dimension(const int world_size) {
-    int dimension = 0;
-
-    for (int d = 1; d <= MAX_DIM; ++d) {
-        if (world_size == lib_power(2, d))
-            dimension = d;
-    }
-
-    return dimension;
-}
 
 /*
  * Simple wrapper, acts as a multicast but only sends to members of a given subgroup.
@@ -88,92 +64,35 @@ void send_pivot(int pivot, const subgroup_info_t * const info) {
         MPI_Isend(&pivot, 1, MPI_INT, info->world_id+i, PIVOT_TAG, MPI_COMM_WORLD, &mpi_request);
 }
 
-///*
-// * Implementation of the hyper quicksort for any given dimension. Topology is assumed to be entirely
-// * in MPI_COMM_WORLD. Details follow traditional hypercube algorithm seen on page 422 of Parallel Computing (Gupta).
-// * At the end, each processor with local_size elements in local will be ready to locally sort.
-// */
-//void hyper_quicksort(const int dimension, const int id, int *local[], int *local_size,
-//        int recv[], const int recv_size) {
-//    MPI_Status mpi_status;
-//    MPI_Request mpi_request;
-//    subgroup_info_t info = {0, 0, 0, 0, id}; /* Init struct to zero, except for id of caller. */
-//    int pivot = 0, lt_size = 0, gt_size = 0, received = 0;
-//
-//    if (dimension < 1)
-//        lib_error("HYPER: Dimension can't be less than 1.");
-//
-//    /* Iterate for all dimensions of cube. */
-//    for (int d = dimension-1; d >= 0; --d) {
-//        /* Determine the group and member number of id, and its partner. */
-//        lib_subgroup_info(d+1, &info);
-//
-//        /* Select and broadcast pivot only to subgroup. */
-//        if (info.member_num == 0) {
-//            pivot = lib_select_pivot(*local, *local_size);
-//            snprintf(log_buf, LOG_SIZE, "ROUND: %d, GROUP: %d, pivot is: %d.\n", dimension-d, info.group_num, pivot);
-//            lib_log(log, "PIVOT", log_buf);
-//            send_pivot(pivot, &info);
-//        } else {
-//            MPI_Recv(&pivot, 1, MPI_INT, MPI_ANY_SOURCE, PIVOT_TAG, MPI_COMM_WORLD, &mpi_status);
-//        }
-//
-//        /* Partition the array. */
-//        lib_partition_by_pivot_val(pivot, *local, *local_size, &lt_size, &gt_size);
-//
-//        /* Barrier here ensures all outstanding pivot recvs complete. */
-//#ifdef QDEBUG
-//        lib_trace_array(log, "PARTITIONED", *local, *local_size);
-//#endif
-//
-//        /* Determine position in the cube. If below is true, I am in upper part of this dimension. */
-//        if (id & (1<<d)) {
-//            MPI_Isend(*local, lt_size, MPI_INT, info.partner, EXCHANGE_TAG, MPI_COMM_WORLD, &mpi_request);
-//            MPI_Recv(recv, recv_size, MPI_INT, info.partner, EXCHANGE_TAG, MPI_COMM_WORLD, &mpi_status);
-//            /* We have sent lower portion, move elements greater down. Update local_size.*/
-//            memmove(*local, *local+lt_size, gt_size*sizeof(int));
-//            *local_size = gt_size;
-//        } else {
-//            MPI_Isend(*local+lt_size, gt_size, MPI_INT, info.partner, EXCHANGE_TAG, MPI_COMM_WORLD, &mpi_request);
-//            MPI_Recv(recv, recv_size, MPI_INT, info.partner, EXCHANGE_TAG, MPI_COMM_WORLD, &mpi_status);
-//            /* We have sent upper portion of array, merely update size and ignore older elements. */
-//            *local_size = lt_size;
-//        }
-//
-//        /* Get the received count and call array union function to merge into local. */
-//        MPI_Get_count(&mpi_status, MPI_INT, &received);
-//        lib_array_union(local, local_size, recv, received);
-//
-//        /* Ensure all partner exchanges complete before proceeding to the next round. */
-//#ifdef QDEBUG
-//        lib_trace_array(log, "RECV", recv, received);
-//        lib_trace_array(log, "UNION", *local, *local_size);
-//#endif
-//    }
-//}
-
 /*
  * Implementation of the hyper quicksort for any given dimension. Topology is assumed to be entirely
  * in MPI_COMM_WORLD. Details follow traditional hypercube algorithm seen on page 422 of Parallel Computing (Gupta).
  * At the end, each processor with local_size elements in local will be ready to locally sort.
  */
 void hyper_quicksort(const int dimension, const int id, int *local[], int *local_size,
-        int recv[], const int recv_size, const int *pivots, const int pivots_size) {
+        int recv[], const int recv_size) {
     MPI_Status mpi_status;
     MPI_Request mpi_request;
-    subgroup_info_t info = {0, 0, 0, 0, id, 0}; /* Init struct to zero, except for id of caller. */
-    int lt_size = 0, gt_size = 0, received = 0;
-
-    if (dimension < 1)
-        lib_error("HYPER: Dimension can't be less than 1.");
+    subgroup_info_t info = {0, 0, 0, 0, id};
+    int pivot = 0, lt_size = 0, gt_size = 0, received = 0;
 
     /* Iterate for all dimensions of cube. */
-    for (int d = dimension; d >= 0; --d) {
+    for (int d = dimension-1; d >= 0; --d) {
         /* Determine the group and member number of id, and its partner. */
-        lib_subgroup_info(dimension, d, &info);
+        lib_subgroup_info(d+1, &info);
+
+        /* Select and broadcast pivot only to subgroup. */
+        if (info.member_num == 0) {
+            pivot = lib_select_pivot(*local, *local_size);
+            snprintf(log_buf, LOG_SIZE, "ROUND: %d, GROUP: %d, pivot is: %d.\n", dimension-d, info.group_num, pivot);
+            lib_log(log, "PIVOT", log_buf);
+            send_pivot(pivot, &info);
+        } else {
+            MPI_Recv(&pivot, 1, MPI_INT, MPI_ANY_SOURCE, PIVOT_TAG, MPI_COMM_WORLD, &mpi_status);
+        }
 
         /* Partition the array. */
-        lib_partition_by_pivot_val(pivots[info.pivot_index], *local, *local_size, &lt_size, &gt_size);
+        lib_partition_by_pivot_val(pivot, *local, *local_size, &lt_size, &gt_size);
 
         /* Barrier here ensures all outstanding pivot recvs complete. */
 #ifdef QDEBUG
@@ -210,8 +129,8 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
  * Main execution body.
  */
 int main(int argc, char **argv) {
-    int id = 0, world = 0, num_per_proc = 0, root_size = 0, recv_size = 0, local_size = 0, dimension = 0, num_pivots = 0;
-    int *root = NULL, *recv = NULL, *local = NULL, pivots[MAX_PIVOTS];
+    int id = 0, world = 0, num_proc = 0, root_size = 0, recv_size = 0, local_size = 0;
+    int *root = NULL, *recv = NULL, *local = NULL;
     char file[FILE_SIZE];
     double start = 0.0;
 
@@ -221,22 +140,18 @@ int main(int argc, char **argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &id);
     MPI_Comm_size(MPI_COMM_WORLD, &world);
 
-#ifdef QDEBUG
     /* Open log file, overwrite on each open. */
     snprintf(file, FILE_SIZE, LOG_FORMAT, id);
     if ((log = fopen(file, "w")) == NULL)
         lib_error("MAIN: Could not open log file.");
-#endif
 
-    /* Determine the dimension of the cube. */
-    dimension = determine_dimension(world);
-    if (dimension == 0)
-        lib_error("MAIN: This hypercube program only supports running with 2, 4 or 8 processors.");
-    num_pivots = lib_power(2, dimension) -1;
+    /* Protection from invalid use. */
+    if (argc < 3)
+        lib_error("MAIN: Bad usage, see top of respective c file.");
 
     /* Get the work amount from command for each process. */
-    num_per_proc = atoi(*++argv);
-    root_size = num_per_proc * world;
+    num_proc = atoi(*++argv);
+    root_size = num_proc * world;
 
     /* Root only work, ensure good usage and proper input. */
     if (id == ROOT) {
@@ -246,29 +161,21 @@ int main(int argc, char **argv) {
             lib_error("MAIN: Can't allocate root_vals array on heap.");
 
         /* If requested, generate new input file. */
-        if (argc == 3 && strcmp(*++argv, GENERATE_FLAG) == 0) {
+        if (strcmp(*++argv, GENERATE_FLAG) == 0) {
             lib_generate_numbers(root, root_size);
             lib_write_file(INPUT, root, root_size);
         }
 
         /* Read back input from file into array on heap. */
         lib_read_file(INPUT, root, root_size);
-
-        /* Select pivots here. First, select medians in root array. Then select from there number of pivots. */
-        int num_medians = lib_select_medians(root, 0, root_size-1);
-        lib_select_pivots_from_medians(dimension, pivots, MAX_PIVOTS, root, num_medians);
-#ifdef QDEBUG
-        lib_trace_array(stdout, "PIVOTS", pivots, num_pivots);
-#endif
     }
 
     /*
-     * Allocate a recv buffer with a bit of extra padding, accounts for small deviations in distribution.
-     * Local will be reallocated based on need, start as num_per_proc.
+     * Allocate a recv buf of root_size (though not likely needed) and a local size of n/p.
+     * The recv buf accounts for the unlikely but possible lop sideded partitioning.
      */
-    recv_size = num_per_proc * GATHER_SCALE;
-    local_size = num_per_proc;
-
+    recv_size = num_proc * GATHER_SCALE;
+    local_size = num_proc;
     recv = (int *)malloc(recv_size * sizeof(int));
     if (recv == NULL)
         lib_error("MAIN: Can't allocate recv array on heap.");
@@ -277,16 +184,15 @@ int main(int argc, char **argv) {
     if (local == NULL)
         lib_error("MAIN: Can't allocate local array on heap.");
 
-    /* Scatter across the processes and then do hyper quicksort algorithm. Also, bcast the pivots. */
-    MPI_Scatter(root, num_per_proc, MPI_INT, local, local_size, MPI_INT, ROOT, MPI_COMM_WORLD);
-    MPI_Bcast(pivots, num_pivots, MPI_INT, ROOT, MPI_COMM_WORLD);
+    /* Scatter across the processes and then do hyper quicksort algorithm. */
+    MPI_Scatter(root, num_proc, MPI_INT, local, local_size, MPI_INT, ROOT, MPI_COMM_WORLD);
 
 #ifdef QDEBUG
     lib_trace_array(log, "SCATTER", local, local_size);
 #endif
 
     /* Rearrange the cube so that each processor has data strictly less than one with higher number.*/
-    hyper_quicksort(MAX_DIM, id, &local, &local_size, recv, recv_size, pivots, num_pivots);
+    hyper_quicksort(MAX_DIM, id, &local, &local_size, recv, recv_size);
 
 #ifdef QDEBUG
     lib_trace_array(log, "HYPER", local, local_size);
@@ -294,7 +200,7 @@ int main(int argc, char **argv) {
 
     /*
      * Reallocated root to be rescaled, mpi_gather doesn't know how many per process anymore.
-     * Set values to -1 and assume it won't be worse than the scaling factor of about 20%.
+     * Set values to -1.
      */
     if (id == ROOT) {
         free(root);
@@ -307,9 +213,9 @@ int main(int argc, char **argv) {
 
     /* Quicksort local array and then send back to root. */
     qsort(local, local_size, sizeof(int), lib_compare);
-    MPI_Gather(local, local_size, MPI_INT, root, GATHER_SCALE*num_per_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
+    MPI_Gather(local, local_size, MPI_INT, root, GATHER_SCALE*num_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
 
-    /* Last step, root has to compress array due to uneven nature after gather. Then write to file. */
+	/* Last step, root has to compress array due to uneven nature after gather. Then write to file. */
     if (id == ROOT) {
         lib_compress_array(world, root, root_size);
 
@@ -327,9 +233,7 @@ int main(int argc, char **argv) {
     if (local != NULL)
         free(local);
 
-#ifdef QDEBUG
     fclose(log);
-#endif
 
     MPI_Finalize();
 

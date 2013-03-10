@@ -22,7 +22,6 @@ typedef struct subgroup_info_s {
     int member_num; /* Position in the relevant subgroup, starts at 0. */
     int partner; /* Partner to exchange data with during the hypercube round. */
     int world_id; /* ID of this process in the MPI_COMM_WORLD group. */
-    int pivot_index; /* Depending on the round and dimension, this is the pivot needed. */
 } subgroup_info_t;
 
 /********************** Prototypes ************************/
@@ -85,7 +84,7 @@ int lib_power(const int base, const unsigned int exp);
  * The root of any given subgroup has d 0's starting from the right.
  * That basically means it is some modulo, I'll also return the subgroup.
  */
-void lib_subgroup_info(const int max_dimension, const int dimension, subgroup_info_t *info);
+void lib_subgroup_info(const int dimension, subgroup_info_t *info);
 
 /*
  * Function takes two arrays of passed size and merges them into array a.
