@@ -36,7 +36,7 @@
  *  -> Resolve outstanding scaling issue. Memory limited?
  *  Bug Note: There seems to be an issue with the MPI library. For numbers > 10000, this program
  *  crashes inside the MPI_Gather code. I do not in fact know why this happens after spend several hours
- *  on it. I'd like to know though, maybe you have an idea?
+ *  on it. I'd like to know though, maybe you have an idea? All other code is known to work.
  */
 /********************* Header Files ***********************/
 /* C Headers */
@@ -50,6 +50,7 @@
 #include "file_ops.h"
 
 /******************* Constants/Macros *********************/
+/* Scaling factor gives buffer room for gather, might be a bit excessive. */
 #define GATHER_SCALE 		3
 #define QDEBUG 				1 // Enable this line for tracing code.
 #define LOG_SIZE			100
