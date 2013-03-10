@@ -262,7 +262,7 @@ int main(int argc, char **argv) {
 
     	for (int i = 1; i < world; ++i) {
     		MPI_Recv(root+recv_size, root_size-recv_size, MPI_INT, i, i, MPI_COMM_WORLD, &mpi_status);
-    		MPI_Get_count(mpi_status, MPI_INT, temp);
+    		MPI_Get_count(&mpi_status, MPI_INT, &temp);
     		recv_size += temp;
     	}
     } else {
@@ -272,13 +272,13 @@ int main(int argc, char **argv) {
 
     /* Last step, root has to compress array due to uneven nature after gather. Then write to file. */
     if (id == ROOT) {
-        lib_compress_array(world, root, root_size);
+//        lib_compress_array(world, root, root_size);
 
 #ifdef QDEBUG
-        lib_trace_array(log, "GATHER", root, root_size/GATHER_SCALE);
+        lib_trace_array(log, "GATHER", root, root_size);
 #endif
 
-        lib_write_file(OUTPUT, root, root_size/GATHER_SCALE);
+        lib_write_file(OUTPUT, root, root_size);
         printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
         free(root);
     }
