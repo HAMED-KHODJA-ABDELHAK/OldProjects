@@ -261,12 +261,12 @@ int main(int argc, char **argv) {
     	recv_size = local_size;
 
     	for (int i = 1; i < world; ++i) {
-    		MPI_Recv(root+recv_size, root_size-recv_size, MPI_INT, i, i, MPI_COMM_WORLD, &mpi_status);
+    		MPI_Recv(root+recv_size, root_size-recv_size, MPI_INT, i, EXCHANGE_TAG, MPI_COMM_WORLD, &mpi_status);
     		MPI_Get_count(&mpi_status, MPI_INT, &temp);
-    		recv_size += temp;
+    		recv_size += temp - 1;
     	}
     } else {
-    	MPI_Isend(local, local_size, MPI_INT, ROOT, id, MPI_COMM_WORLD, &mpi_request);
+    	MPI_Isend(local, local_size, MPI_INT, ROOT, EXCHANGE_TAG, MPI_COMM_WORLD, &mpi_request);
     }
 //    MPI_Gather(local, local_size, MPI_INT, root, GATHER_SCALE*num_per_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
 
