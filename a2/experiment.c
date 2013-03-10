@@ -31,30 +31,15 @@
 
 /****************** Global Functions **********************/
 
-/*
- * Counts the number of integers in a given file. File is formatted as a csv.
- */
-int lib_count_integers(const char *filename) {
-    int count = 0;
-    char buf[50];
-    FILE *f;
-
-    if ((f = fopen(filename, "r")) == NULL)
-        lib_error("COUNT: Failed to open file.");
-
-    while (fscanf(f, "%s,", buf) && ferror(f) == 0 && feof(f) == 0)
-        count++;
-
-    if (fclose(f) != 0)
-        lib_error("READ: Failed to close properly.");
-
-    return count;
-}
-
 /* The main() function for setting up and running the tests.
  * Returns a CUE_SUCCESS on successful running, another
  * CUnit error code on failure.
  */
 int main() {
-    printf("%d\n", lib_count_integers("temp.txt"));
+	subgroup_info_t info = {0,0,0,0, 3};
+	int d = 1;
+
+    lib_subgroup_info(d+1, &info);
+    printf("Group, mem: %d, %d\n", info.group_num, info.member_num);
+
 }
