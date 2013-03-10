@@ -235,44 +235,27 @@ int main(int argc, char **argv) {
     lib_trace_array(log, "HYPER", local, local_size);
 #endif
 
-//    /*
-//     * Reallocated root to be rescaled, mpi_gather doesn't know how many per process anymore.
-//     * Set values to -1 and assume it won't be worse than the scaling factor of about 20%.
-//     */
-//    if (id == ROOT) {
-//        free(root);
-//        root_size *= GATHER_SCALE;
-//        root = (int *)malloc(root_size * sizeof(int));
-//        if (root == NULL)
-//            lib_error("MAIN: Can't allocate root array on heap.");
-//        memset(root, -1, root_size * sizeof(int));
-//    }
+    /*
+     * Reallocated root to be rescaled, mpi_gather doesn't know how many per process anymore.
+     * Set values to -1 and assume it won't be worse than the scaling factor of about 20%.
+     */
+    if (id == ROOT) {
+        free(root);
+        root_size *= GATHER_SCALE;
+        root = (int *)malloc(root_size * sizeof(int));
+        if (root == NULL)
+            lib_error("MAIN: Can't allocate root array on heap.");
+        memset(root, -1, root_size * sizeof(int));
+    }
 
     /* Quicksort local array and then send back to root. */
     qsort(local, local_size, sizeof(int), lib_compare);
-
-    /* Gather each separately. */
-	MPI_Request mpi_request;
-	MPI_Status mpi_status;
-
-    if (id == ROOT) {
-    	int temp = 0;
-    	memcpy(root, local, local_size*sizeof(int)); // Copy local into root, then get others.
-    	recv_size = local_size;
-
-    	for (int i = 1; i < world; ++i) {
-    		MPI_Recv(root+recv_size, root_size-recv_size, MPI_INT, i, EXCHANGE_TAG, MPI_COMM_WORLD, &mpi_status);
-    		MPI_Get_count(&mpi_status, MPI_INT, &temp);
-    		recv_size += temp - 1;
-    	}
-    } else {
-    	MPI_Isend(local, local_size, MPI_INT, ROOT, EXCHANGE_TAG, MPI_COMM_WORLD, &mpi_request);
-    }
-//    MPI_Gather(local, local_size, MPI_INT, root, GATHER_SCALE*num_per_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
+    MPI_Gather(local, local_size, MPI_INT, root, GATHER_SCALE*num_per_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
 
     /* Last step, root has to compress array due to uneven nature after gather. Then write to file. */
     if (id == ROOT) {
-//        lib_compress_array(world, root, root_size);
+        lib_compress_array(world, root, root_size);
+        root_size /= GATHER_SCALE;
 
 #ifdef QDEBUG
         lib_trace_array(log, "GATHER", root, root_size);
