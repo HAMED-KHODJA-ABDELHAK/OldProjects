@@ -237,12 +237,11 @@ int main(int argc, char **argv) {
 
     /*
      * Reallocated root to be rescaled, mpi_gather doesn't know how many per process anymore.
-     * Set values to -1 and assume it won't be worse than the scaling factor of about 20%.
+     * Worst is everything at one, so set array to root_size*root_size.
      */
     if (id == ROOT) {
         free(root);
-        root_size *= GATHER_SCALE;
-        root = (int *)malloc(root_size * sizeof(int));
+        root = (int *)malloc(root_size * root_size * sizeof(int));
         if (root == NULL)
             lib_error("MAIN: Can't allocate root array on heap.");
         memset(root, -1, root_size * sizeof(int));
@@ -250,7 +249,7 @@ int main(int argc, char **argv) {
 
     /* Quicksort local array and then send back to root. */
     qsort(local, local_size, sizeof(int), lib_compare);
-    MPI_Gather(local, local_size, MPI_INT, root, GATHER_SCALE*num_per_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
+    MPI_Gather(local, local_size, MPI_INT, root, root_size, MPI_INT, ROOT, MPI_COMM_WORLD);
 
     /* Last step, root has to compress array due to uneven nature after gather. Then write to file. */
     if (id == ROOT) {
@@ -260,7 +259,7 @@ int main(int argc, char **argv) {
         lib_trace_array(log, "GATHER", root, root_size/GATHER_SCALE);
 #endif
 
-        lib_write_file(OUTPUT, root, root_size/GATHER_SCALE);
+        lib_write_file(OUTPUT, root, root_size);
         printf("Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
         free(root);
     }
