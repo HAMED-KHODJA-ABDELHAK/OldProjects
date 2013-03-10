@@ -2,6 +2,9 @@
  * This program is the hyper quicksort parallel implementation.
  * This program implements the algorithm as described in the book.
  * Pivot selection occurs during each round along the subgroup. Might work faster if all pivots selected by root.
+ * Pivot selection is done without sorting by using the median of medians selection algorithm,
+ * see details here: http://en.wikipedia.org/wiki/Selection_algorithm.
+ * Many helper functions exist in array_ops.c and file_ops.c see them.
  *
  * Use command: bsub -I -q COMP428 -n <tasks> mpirun -srun ./demo/qParallel <numbers> <mode>
  *
@@ -47,7 +50,6 @@
 #include "file_ops.h"
 
 /******************* Constants/Macros *********************/
-#define BUF_SIZE 			1000000
 #define GATHER_SCALE 		2
 #define QDEBUG 				1 // Enable this line for tracing code.
 #define LOG_SIZE			100
@@ -56,7 +58,6 @@
 /* A tag for use in the send and recv */
 #define PIVOT_TAG			0
 #define EXCHANGE_TAG 		1
-#define MAX_PIVOTS			8
 
 /******************* Type Definitions *********************/
 
