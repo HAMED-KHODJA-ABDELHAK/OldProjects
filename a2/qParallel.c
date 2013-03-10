@@ -129,7 +129,8 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 
         /* Select and broadcast pivot only to subgroup. */
         if (info.member_num == 0) {
-            pivot = lib_median_of_medians(*local, 0, (*local_size) - 1);
+            int pivot_index = lib_median_of_medians(*local, 0, (*local_size) - 1);
+            pivot = (*local)[pivot_index];
 #ifdef QDEBUG
             snprintf(log_buf, LOG_SIZE, "ROUND: %d, GROUP: %d, pivot is: %d.\n", dimension-d, info.group_num, pivot);
             lib_log(log, "PIVOT", log_buf);
