@@ -225,7 +225,7 @@ int main(int argc, char **argv) {
 #endif
 
     /* Rearrange the cube so that each processor has data strictly less than one with higher number.*/
-    hyper_quicksort(MAX_DIM, id, &local, &local_size, recv, recv_size);
+    hyper_quicksort(dimension, id, &local, &local_size, recv, recv_size);
 
 #ifdef QDEBUG
     lib_trace_array(log, "HYPER", local, local_size);
