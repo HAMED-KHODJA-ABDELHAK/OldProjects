@@ -38,7 +38,7 @@
 /******************* Constants/Macros *********************/
 #define BUF_SIZE 			1000000
 #define GATHER_SCALE 		1.5
-#define QDEBUG 				1 // Enable this line for tracing code.
+//#define QDEBUG 				1 // Enable this line for tracing code.
 #define LOG_SIZE			100
 /* Maximum dimension of the hypercube */
 #define MAX_DIM 			3
@@ -117,8 +117,10 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
         /* Select and broadcast pivot only to subgroup. */
         if (info.member_num == 0) {
             pivot = lib_select_pivot(*local, *local_size);
+#ifdef QDEBUG
             snprintf(log_buf, LOG_SIZE, "ROUND: %d, GROUP: %d, pivot is: %d.\n", dimension-d, info.group_num, pivot);
             lib_log(log, "PIVOT", log_buf);
+#endif
             send_pivot(pivot, &info);
         } else {
             MPI_Recv(&pivot, 1, MPI_INT, MPI_ANY_SOURCE, PIVOT_TAG, MPI_COMM_WORLD, &mpi_status);
