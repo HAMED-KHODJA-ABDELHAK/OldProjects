@@ -22,6 +22,7 @@ typedef struct subgroup_info_s {
     int member_num; /* Position in the relevant subgroup, starts at 0. */
     int partner; /* Partner to exchange data with during the hypercube round. */
     int world_id; /* ID of this process in the MPI_COMM_WORLD group. */
+    int pivot_index; /* Depending on the round and dimension, this is the pivot needed. */
 } subgroup_info_t;
 
 /********************** Prototypes ************************/
@@ -84,7 +85,7 @@ int lib_power(const int base, const unsigned int exp);
  * The root of any given subgroup has d 0's starting from the right.
  * That basically means it is some modulo, I'll also return the subgroup.
  */
-void lib_subgroup_info(const int dimension, subgroup_info_t *info);
+void lib_subgroup_info(const int max_dimension, const int dimension, subgroup_info_t *info);
 
 /*
  * Function takes two arrays of passed size and merges them into array a.
@@ -97,5 +98,16 @@ void lib_array_union(int *a[], int *a_size, const int b[], const int b_size);
  * Compress down array to be contiguous.
  */
 void lib_compress_array(int world, int root[], int root_size);
+
+/*
+ * Select the required number of medians and order them at the front of the array.
+ */
+int lib_select_medians(int *vals, const int left, const int right);
+
+/*
+ * Function isn't the nicest, could be refactored to be more elegant. For now,
+ * it will calculate and select the right number of pivots and put them in pivots array for any dimension from 1-3.
+ */
+void lib_select_pivots_from_medians(const int dimension, int *pivots, const int pivots_size, int *vals, const int vals_size);
 
 #endif /* _SHARED_H_ */

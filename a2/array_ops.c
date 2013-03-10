@@ -63,26 +63,6 @@ int lib_select_pivot(int vals[], const int size) {
 
     qsort(vals, size, sizeof(int), lib_compare);
     return vals[size/2];
-
-//	/* Find the largest and smallest of first two. */
-//	if (vals[start] > vals[mid]) {
-//		large = start;
-//		small = mid;
-//	} else {
-//		large = mid;
-//		small = start;
-//	}
-//
-//	/* If end greater than large it is median. Else determine middle of small and end. */
-//	if (vals[end] > vals[large]) {
-//		pivot = vals[large];
-//	} else {
-//		if (vals[end] > vals[small]) {
-//			pivot = vals[end];
-//		} else {
-//			pivot = vals[small];
-//		}
-//	}
 }
 
 /*
@@ -178,31 +158,6 @@ int lib_select_kth(int kth, int *left, int *right) {
     return left+new_pivot_index - store_l;
 }
 
-/* This function groups values into blocks of five and then selects a median.
- * All such medians are collected at the front and the median of this group is selected as the true median.
- */
-int lib_median_of_medians(int *vals, int left, int right) {
-     int num_medians = (right+1-left)/5;
-     int sub_left, sub_right, median_index;
-
-     for (int i = 0; i < num_medians; ++i) {
-         /* Get the median of the five-element subgroup. */
-         sub_left = left + i*5;
-         sub_right = sub_left + 4;
-
-         /* Ensure we never leave bounds. */
-         if (sub_right > right)
-           sub_right = right;
-
-         median_index = lib_select_kth(3, vals+sub_left, vals+sub_right);
-         /* Move the median to front of the list. */
-         lib_swap(vals+left+i, vals+sub_left+median_index);
-     }
-
-     /* Select the median from our medians at the front of list. */
-     return lib_select_kth((num_medians/2)+1, vals+left, vals+num_medians-1);
-}
-
 /*
  * Integer power function, takes log(n) steps to compute.
  */
@@ -227,11 +182,21 @@ int lib_power(const int base, const unsigned int exp) {
  * The root of any given subgroup has d 0's starting from the right.
  * That basically means it is some modulo, I'll also return the subgroup and it's partner.
  */
-void lib_subgroup_info(const int dimension, subgroup_info_t *info) {
+void lib_subgroup_info(const int max_dimension, const int dimension, subgroup_info_t *info) {
     info->group_size = lib_power(2, dimension);
     info->group_num = info->world_id / info->group_size;
     info->member_num = info->world_id % info->group_size;
     info->partner = info->world_id ^ (1<<(dimension-1));
+
+    /* Mapping function, maps first round to 0 and subsequent rounds onto right pivots.
+     * Function is (max_d-d)^2 + group. */
+    info->pivot_index = max_dimension-dimension;
+    info->pivot_index *= info->pivot_index;
+
+    if ((max_dimension - dimension) > 1)
+    	info->pivot_index -= 1;
+
+    info->pivot_index += info->group_num;
 }
 
 /*
@@ -277,9 +242,9 @@ void lib_compress_array(int world, int root[], int root_size) {
 }
 
 /*
- * Select the required number of pivots and return them in the passed in array.
+ * Select the required number of medians and order them at the front of the array.
  */
-void lib_select_medians(int *vals, const int left, const int right) {
+int lib_select_medians(int *vals, const int left, const int right) {
     int num_medians = (right-left+1)/5;
     int sub_left = 0, sub_right = 0, median_index = 0;
 
@@ -296,22 +261,73 @@ void lib_select_medians(int *vals, const int left, const int right) {
         median_index = lib_select_kth(3, vals+sub_left, vals+sub_right);
         lib_swap(vals+left+i, vals+sub_left+median_index);
     }
+
+    /* Sort the new medians. */
+	qsort(vals, num_medians, sizeof(int), lib_compare);
+
+    return num_medians;
 }
 
 /*
- * Pivot array will contain at end of this function in order:
- * - First pivot val partitions group in two.
- * - Second and third partition the first subgroups in half.
- * - Remaining 4 will partition the remaining subgroups.
+ * Function isn't the nicest, could be refactored to be more elegant. For now,
+ * it will calculate and select the right number of pivots and put them in pivots array for any dimension from 1-3.
  */
-void lib_select_pivots_from_medians(int *pivots, int *vals, const int vals_size) {
-    pivots[0] = lib_select_kth((vals_size/2)+1, vals, vals+vals_size-1);
+void lib_select_pivots_from_medians(const int dimension, int *pivots, const int pivots_size, int *vals, const int vals_size) {
+	int num_pivots = lib_power(2, dimension) - 1, m_index = 0;
+	if (pivots_size < num_pivots)
+		lib_error("SELECT_PIVOTS: Pivots array is not large enough.");
 
-    pivots[1] = lib_select_kth((vals_size/4)+1, vals, vals+vals_size-1);
-    pivots[2] = lib_select_kth((3*vals_size/4)+1, vals, vals+vals_size-1);
+	/* Select pivots from medians based on dimension. */
+	if (dimension >= 1) {
+		m_index = (int) (vals_size)/2 - 1;
+		pivots[0] = vals[m_index];
+	}
 
-    pivots[3] = lib_select_kth((vals_size/8)+1, vals, vals+vals_size-1);
-    pivots[4] = lib_select_kth((3*vals_size/8)+1, vals, vals+vals_size-1);
-    pivots[5] = lib_select_kth((5*vals_size/2)+1, vals, vals+vals_size-1);
-    pivots[6] = lib_select_kth((7*vals_size/2)+1, vals, vals+vals_size-1);
+	if (dimension >= 2) {
+		m_index = (int) (vals_size)/4;
+		pivots[1] = vals[m_index];
+
+		m_index = (int) (3*vals_size)/4;
+		pivots[2] = vals[m_index];
+	}
+
+	if (dimension >= 3) {
+		m_index = (int) (vals_size)/8;
+		pivots[3] = vals[m_index];
+
+		m_index = (int) (3*vals_size)/8;
+		pivots[4] = vals[m_index];
+
+		m_index = (int) (5*vals_size)/8;
+		pivots[5] = vals[m_index];
+
+		m_index = (int) (7*vals_size)/8;
+		pivots[6] = vals[m_index];
+	}
+}
+
+
+/* This function groups values into blocks of five and then selects a median.
+ * All such medians are collected at the front and the median of this group is selected as the true median.
+ */
+int lib_median_of_medians(int *vals, int left, int right) {
+     int num_medians = (right+1-left)/5;
+     int sub_left, sub_right, median_index;
+
+     for (int i = 0; i < num_medians; ++i) {
+         /* Get the median of the five-element subgroup. */
+         sub_left = left + i*5;
+         sub_right = sub_left + 4;
+
+         /* Ensure we never leave bounds. */
+         if (sub_right > right)
+           sub_right = right;
+
+         median_index = lib_select_kth(3, vals+sub_left, vals+sub_right);
+         /* Move the median to front of the list. */
+         lib_swap(vals+left+i, vals+sub_left+median_index);
+     }
+
+     /* Select the median from our medians at the front of list. */
+     return lib_select_kth((num_medians/2)+1, vals+left, vals+num_medians-1);
 }
