@@ -126,9 +126,9 @@ void lib_partition_by_pivot_val(int pivot, int vals[], const int vals_size, int 
 int lib_partition_by_pivot_index(int pivot_index, int *left, int *right) {
     /* Store them starting at left and moving right. */
     int *store_l = left, *store_r = right;
-	int pivot_val = left[pivot_index];
+    int pivot_val = left[pivot_index];
 
-	/* Move pivot to farthest left value in array. */
+    /* Move pivot to farthest left value in array. */
     lib_swap(left+pivot_index, left);
 
     while (left < right) {
@@ -139,11 +139,11 @@ int lib_partition_by_pivot_index(int pivot_index, int *left, int *right) {
             --right;
 
         if (left < right)
-        	lib_swap(left, right);
+            lib_swap(left, right);
     }
 
     /* Right points to position of pivot. */
-	lib_swap(right, store_l);
+    lib_swap(right, store_l);
 
     /* Return index of pivot in partitioned array. */
     return right-store_l;
@@ -165,7 +165,7 @@ int lib_select_kth(int kth, int *left, int *right) {
 
         /* If pivot dist = kth, we are there. If > kth, we move right pointer left. Else left pointer goes right. */
         if (pivot_dist == kth)
-        	break;
+            break;
         else if (pivot_dist > kth)
             right = left+new_pivot_index-1;
         else {
@@ -174,7 +174,7 @@ int lib_select_kth(int kth, int *left, int *right) {
         }
     }
 
-	/* Return index of kth in original array, should be kth-1. */
+    /* Return index of kth in original array, should be kth-1. */
     return left+new_pivot_index - store_l;
 }
 
@@ -274,4 +274,44 @@ void lib_compress_array(int world, int root[], int root_size) {
             ++right;
         }
     }
+}
+
+/*
+ * Select the required number of pivots and return them in the passed in array.
+ */
+void lib_select_medians(int *vals, const int left, const int right) {
+    int num_medians = (right-left+1)/5;
+    int sub_left = 0, sub_right = 0, median_index = 0;
+
+    /* For each group of five elements. */
+    for (int i = 0; i < num_medians; ++i) {
+        sub_left = left+i*5;
+        sub_right = sub_left+4;
+
+        /* Bounds protection. */
+        if(sub_right > right)
+            sub_right = right;
+
+        /* Select the third largest element, the median. Swap to front. */
+        median_index = lib_select_kth(3, vals+sub_left, vals+sub_right);
+        lib_swap(vals+left+i, vals+sub_left+median_index);
+    }
+}
+
+/*
+ * Pivot array will contain at end of this function in order:
+ * - First pivot val partitions group in two.
+ * - Second and third partition the first subgroups in half.
+ * - Remaining 4 will partition the remaining subgroups.
+ */
+void lib_select_pivots_from_medians(int *pivots, int *vals, const int vals_size) {
+    pivots[0] = lib_select_kth((vals_size/2)+1, vals, vals+vals_size-1);
+
+    pivots[1] = lib_select_kth((vals_size/4)+1, vals, vals+vals_size-1);
+    pivots[2] = lib_select_kth((3*vals_size/4)+1, vals, vals+vals_size-1);
+
+    pivots[3] = lib_select_kth((vals_size/8)+1, vals, vals+vals_size-1);
+    pivots[4] = lib_select_kth((3*vals_size/8)+1, vals, vals+vals_size-1);
+    pivots[5] = lib_select_kth((5*vals_size/2)+1, vals, vals+vals_size-1);
+    pivots[6] = lib_select_kth((7*vals_size/2)+1, vals, vals+vals_size-1);
 }

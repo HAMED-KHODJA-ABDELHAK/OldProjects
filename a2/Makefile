@@ -34,6 +34,7 @@ EXES = \
 	$(EXE_DIR)/qParallel \
 	$(EXE_DIR)/experiment \
 	$(EXE_DIR)/test_array_ops \
+	$(EXE_DIR)/test_file_ops \
 
 # Custom rules, define how to link and compile respectively.
 $(EXE_DIR)/%: %.o 

@@ -35,17 +35,35 @@
 
 /****************** Global Functions **********************/
 /*
+ * Counts the number of integers in a given file. File is formatted as a csv with a comma after every integer.
+ */
+int lib_count_integers(const char *filename) {
+    int count = 0, temp = 0;
+    FILE *f;
+
+    if ((f = fopen(filename, "r")) == NULL)
+        lib_error("COUNT: Failed to open file.");
+
+    while (fscanf(f, "%d,", &temp) && ferror(f) == 0 && feof(f) == 0)
+        count++;
+
+    if (fclose(f) != 0)
+        lib_error("READ: Failed to close properly.");
+
+    return count;
+}
+
+/*
  * Opens the filename passed in and reads size numbers into the vals array.
  */
 void lib_read_file(const char *filename, int *vals, const int size) {
     // Note on size, I start it at -1 to compensate for the below while loop going one extra time.
-    int i;
     FILE *f;
 
     if ((f = fopen(filename, "r")) == NULL)
         lib_error("READ: Failed to open file.");
 
-    for (i = 0; i < size; ++i)
+    for (int i = 0; i < size; ++i)
         fscanf(f, "%d,", vals+i);
 
     if (fclose(f) != 0)
@@ -72,7 +90,7 @@ void lib_write_file(const char *filename, const int *vals, const int size) {
 /*
  * Simple logging function to log the status of buffers and other variables.
  * Each process has log for itself called log.rank.txt.
- * Format of log is: date - tag: mesg
+ * Format of log is: (date) tag: mesg
  */
 void lib_log(FILE *f, const char *tag, const char *mesg) {
     time_t rawtime;
@@ -82,7 +100,6 @@ void lib_log(FILE *f, const char *tag, const char *mesg) {
     /* Get current time and format string into date. */
     time(&rawtime);
     timeinfo = localtime(&rawtime);
-//	strftime(date, 30, "(%d %b, %Y %T)", timeinfo); // Full date.
     strftime(date, 30, "(%T)", timeinfo);
 
     fprintf(f, "%s %s: %s", date, tag, mesg);
@@ -100,7 +117,7 @@ void lib_trace_array(FILE *f, char *tag, int array[], int size) {
     /* Using the standard logging function to store info. */
     lib_log(f, tag, "Tracing an array, numbers are:\n");
 
-    /* Print blocks of 16 numbers into it and flush. */
+    /* Print blocks of 20 numbers into it and flush. */
     for (int i = 0; i < size; ++i) {
         count += snprintf(buf+count, buf_size-count, "%d ", array[i]);
         if (i != 0 && (i % 20) == 0) {
@@ -112,7 +129,7 @@ void lib_trace_array(FILE *f, char *tag, int array[], int size) {
         }
     }
 
-    /* Final print if we didn't hit a 16 val. */
+    /* Final print if we still have stuff in the buffer. */
     if (count != 0) {
         count += snprintf(buf+count, buf_size-count, "\n");
         lib_log(f, tag, buf);

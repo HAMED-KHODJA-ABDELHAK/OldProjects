@@ -19,6 +19,11 @@
 
 /********************** Prototypes ************************/
 /*
+ * Counts the number of integers in a given file. File is formatted as a csv.
+ */
+int lib_count_integers(const char *filename);
+
+/*
  * Opens the filename passed in and reads size numbers into the vals array.
  */
 void lib_read_file(const char *filename, int *vals, const int size);

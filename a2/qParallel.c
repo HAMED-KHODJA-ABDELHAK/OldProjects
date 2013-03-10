@@ -1,16 +1,25 @@
 /**
- * Reference implementation of quicksort with serial implementation as baseline.
- * This program will only serially calculate the quicksort of the input file.
- * If you don't know the number of words in your input: cat input.txt | wc, second number is word count.
- * See mylib.h/.c for functions not in this file.
+ * This program is the hyper quicksort parallel implementation.
+ * This program implements the algorithm as described in the book.
+ * There are many library functions used not in this file, see array_ops.c and file_ops.c for implementations.
  *
- * Use command: bsub -I -q COMP428 -n1 mpirun -srun ./demo/parallel <work> <mode>
+ * Use command: bsub -I -q COMP428 -n <tasks> mpirun -srun ./demo/qParallel <numbers> <mode>
  *
- * Arguments to serial:
- * work: The amount of numbers per process, total = work * world size.
+ * Arguments:
+ * tasks: The amount of number of processes to start. Only 2, 4 and 8 are acceptable.
+ * numbers: Amount of integers to put in generated file. Only needed if mode set to 'gen'.
  * mode: Flag that optionally makes master generate a new input.
- * 		-> Use "gen" to generate new input.
- * 		-> Use "read" to use existing input.txt.
+ *      -> Use "gen" to generate new input.
+ *      -> To read from input.txt, simply omit 'mode' and 'numbers'.
+ *
+ * Input format:
+ * I accept any file that is formatted so every integer is separated by a comma. Any amount of whitespace
+ * between comma and next integer is allowable. Example: 10, 20,\n30,    50,
+ *
+ * Logging:
+ * I have created a rudimentary logging framework. It traces throughout execution the state of the arrays.
+ * It is disabled by default, remove the comment on QDEBUG line and recompile to enable.
+ *
  * TODO:
  *  -> Resolve outstanding scaling issue. Memory limited?
  *  -> Resolve CUnit issue on cirrus.
@@ -29,7 +38,7 @@
 /******************* Constants/Macros *********************/
 #define BUF_SIZE 			1000000
 #define GATHER_SCALE 		1.2
-#define QDEBUG 				1 // Enable this line for tracing code.
+//#define QDEBUG 				1 // Enable this line for tracing code.
 #define LOG_SIZE			100
 /* Maximum dimension of the hypercube */
 #define MAX_DIM 			3
@@ -52,6 +61,20 @@ static char log_buf[LOG_SIZE];
 
 
 /****************** Global Functions **********************/
+/*
+ * I only allow program to run if size is of a hypercube with dimension 1, 2 or 3.
+ * If not right size, return 0 and fail. Else return the dimension.
+ */
+int determine_dimension(const int world_size) {
+    int dimension = 0;
+
+    for (int d = 1; d <= MAX_DIM; ++d) {
+        if (world_size == lib_power(2, d))
+            dimension = d;
+    }
+
+    return dimension;
+}
 
 /*
  * Simple wrapper, acts as a multicast but only sends to members of a given subgroup.
@@ -73,8 +96,11 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
         int recv[], const int recv_size) {
     MPI_Status mpi_status;
     MPI_Request mpi_request;
-    subgroup_info_t info = {0, 0, 0, 0, id};
+    subgroup_info_t info = {0, 0, 0, 0, id}; /* Init struct to zero, except for id of caller. */
     int pivot = 0, lt_size = 0, gt_size = 0, received = 0;
+
+    if (dimension < 1)
+        lib_error("HYPER: Dimension can't be less than 1.");
 
     /* Iterate for all dimensions of cube. */
     for (int d = dimension-1; d >= 0; --d) {
@@ -129,7 +155,7 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
  * Main execution body.
  */
 int main(int argc, char **argv) {
-    int id = 0, world = 0, num_proc = 0, root_size = 0, recv_size = 0, local_size = 0;
+    int id = 0, world = 0, num_per_proc = 0, root_size = 0, recv_size = 0, local_size = 0, dimension = 0;
     int *root = NULL, *recv = NULL, *local = NULL;
     char file[FILE_SIZE];
     double start = 0.0;
@@ -140,18 +166,21 @@ int main(int argc, char **argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &id);
     MPI_Comm_size(MPI_COMM_WORLD, &world);
 
+#ifdef QDEBUG
     /* Open log file, overwrite on each open. */
     snprintf(file, FILE_SIZE, LOG_FORMAT, id);
     if ((log = fopen(file, "w")) == NULL)
         lib_error("MAIN: Could not open log file.");
+#endif
 
-    /* Protection from invalid use. */
-    if (argc < 3)
-        lib_error("MAIN: Bad usage, see top of respective c file.");
+    /* Determine the dimension of the cube. */
+    dimension = determine_dimension(world);
+    if (dimension == 0)
+        lib_error("MAIN: This hypercube program only supports running with 2, 4 or 8 processors.");
 
     /* Get the work amount from command for each process. */
-    num_proc = atoi(*++argv);
-    root_size = num_proc * world;
+    num_per_proc = atoi(*++argv);
+    root_size = num_per_proc * world;
 
     /* Root only work, ensure good usage and proper input. */
     if (id == ROOT) {
@@ -161,7 +190,7 @@ int main(int argc, char **argv) {
             lib_error("MAIN: Can't allocate root_vals array on heap.");
 
         /* If requested, generate new input file. */
-        if (strcmp(*++argv, GENERATE_FLAG) == 0) {
+        if (argc == 3 && strcmp(*++argv, GENERATE_FLAG) == 0) {
             lib_generate_numbers(root, root_size);
             lib_write_file(INPUT, root, root_size);
         }
@@ -171,11 +200,12 @@ int main(int argc, char **argv) {
     }
 
     /*
-     * Allocate a recv buf of root_size (though not likely needed) and a local size of n/p.
-     * The recv buf accounts for the unlikely but possible lop sideded partitioning.
+     * Allocate a recv buffer with a bit of extra padding, accounts for small deviations in distribution.
+     * Local will be reallocated based on need, start as num_per_proc.
      */
-    recv_size = num_proc * GATHER_SCALE;
-    local_size = num_proc;
+    recv_size = num_per_proc * GATHER_SCALE;
+    local_size = num_per_proc;
+
     recv = (int *)malloc(recv_size * sizeof(int));
     if (recv == NULL)
         lib_error("MAIN: Can't allocate recv array on heap.");
@@ -185,7 +215,7 @@ int main(int argc, char **argv) {
         lib_error("MAIN: Can't allocate local array on heap.");
 
     /* Scatter across the processes and then do hyper quicksort algorithm. */
-    MPI_Scatter(root, num_proc, MPI_INT, local, local_size, MPI_INT, ROOT, MPI_COMM_WORLD);
+    MPI_Scatter(root, num_per_proc, MPI_INT, local, local_size, MPI_INT, ROOT, MPI_COMM_WORLD);
 
 #ifdef QDEBUG
     lib_trace_array(log, "SCATTER", local, local_size);
@@ -200,7 +230,7 @@ int main(int argc, char **argv) {
 
     /*
      * Reallocated root to be rescaled, mpi_gather doesn't know how many per process anymore.
-     * Set values to -1.
+     * Set values to -1 and assume it won't be worse than the scaling factor of about 20%.
      */
     if (id == ROOT) {
         free(root);
@@ -213,9 +243,9 @@ int main(int argc, char **argv) {
 
     /* Quicksort local array and then send back to root. */
     qsort(local, local_size, sizeof(int), lib_compare);
-    MPI_Gather(local, local_size, MPI_INT, root, GATHER_SCALE*num_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
+    MPI_Gather(local, local_size, MPI_INT, root, GATHER_SCALE*num_per_proc, MPI_INT, ROOT, MPI_COMM_WORLD);
 
-	/* Last step, root has to compress array due to uneven nature after gather. Then write to file. */
+    /* Last step, root has to compress array due to uneven nature after gather. Then write to file. */
     if (id == ROOT) {
         lib_compress_array(world, root, root_size);
 
@@ -233,7 +263,9 @@ int main(int argc, char **argv) {
     if (local != NULL)
         free(local);
 
+#ifdef QDEBUG
     fclose(log);
+#endif
 
     MPI_Finalize();
 
