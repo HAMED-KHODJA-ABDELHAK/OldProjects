@@ -107,7 +107,8 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
     for (int d = dimension-1; d >= 0; --d) {
         /* Determine the group and member number of id, and its partner. */
         lib_subgroup_info(d+1, &info);
-
+        snprintf(log_buf, LOG_SIZE, "INFO: Group, mem, partner. %d %d %d.\n", info.group_num, info.member_num, info.partner);
+        lib_log(log, "INFO", log_buf);
         /* Select and broadcast pivot only to subgroup. */
         if (info.member_num == 0) {
             pivot = lib_select_pivot(*local, *local_size);
