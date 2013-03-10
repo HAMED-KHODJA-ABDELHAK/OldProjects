@@ -1,16 +1,22 @@
 /**
  * This program is the hyper quicksort parallel implementation.
  * This program implements the algorithm as described in the book.
- * There are many library functions used not in this file, see array_ops.c and file_ops.c for implementations.
+ * Pivot selection occurs during each round along the subgroup. Might work faster if all pivots selected by root.
  *
  * Use command: bsub -I -q COMP428 -n <tasks> mpirun -srun ./demo/qParallel <numbers> <mode>
  *
  * Arguments:
  * tasks: The amount of number of processes to start. Only 2, 4 and 8 are acceptable.
- * numbers: Amount of integers to put in generated file. Only needed if mode set to 'gen'.
+ * numbers: Amount of integers per task, total integers is tasks * numbers.
  * mode: Flag that optionally makes master generate a new input.
  *      -> Use "gen" to generate new input.
  *      -> To read from input.txt, simply omit 'mode' and 'numbers'.
+ *
+ * Example generate file with 10000 numbers per process, 8 process.
+ * Use command: bsub -I -q COMP428 -n 8 mpirun -srun ./demo/qParallel 10000 gen
+ *
+ * Easy way to count number of integers in one of my inputs:
+ * cat input.txt | wc, second integer is number of ints.
  *
  * Input format:
  * I accept any file that is formatted so every integer is separated by a comma. Any amount of whitespace
@@ -20,9 +26,14 @@
  * I have created a rudimentary logging framework. It traces throughout execution the state of the arrays.
  * It is disabled by default, remove the comment on QDEBUG line and recompile to enable.
  *
+ * Tests:
+ * There are unit tests, those are also disabled. You can ignore them or read them if you like.
+ *
  * TODO:
  *  -> Resolve outstanding scaling issue. Memory limited?
- *  -> Resolve CUnit issue on cirrus.
+ *  Bug Note: There seems to be an issue with the MPI library. For numbers > 10000, this program
+ *  crashes inside the MPI_Gather code. I do not in fact know why this happens after spend several hours
+ *  on it. I'd like to know though, maybe you have an idea?
  */
 /********************* Header Files ***********************/
 /* C Headers */
@@ -116,7 +127,7 @@ void hyper_quicksort(const int dimension, const int id, int *local[], int *local
 
         /* Select and broadcast pivot only to subgroup. */
         if (info.member_num == 0) {
-            pivot = lib_select_pivot(*local, *local_size);
+            pivot = lib_median_of_medians(*local, 0, (*local_size) - 1);
 #ifdef QDEBUG
             snprintf(log_buf, LOG_SIZE, "ROUND: %d, GROUP: %d, pivot is: %d.\n", dimension-d, info.group_num, pivot);
             lib_log(log, "PIVOT", log_buf);
