@@ -37,6 +37,7 @@
 //#include <cassert>
 
 /* Project Headers */
+#include <CUnit/Basic.h>
 #include "lib_floyd.hpp"
 
 /******************* Constants/Macros *********************/
@@ -71,16 +72,58 @@ using std::string;
 
 
 /****************** Global Functions **********************/
+/*
+ * Suite initialization function run before each test.
+ */
+int suite_init(void) {
+
+    return 0;
+}
+
+/* The suite cleanup function.
+ */
+int suite_clean(void) {
+
+    return 0;
+}
+
+/*
+ * Compare function, equal case.
+ */
+void test_compare_empty(void) {
+    int a = 9, b = 9;
+    CU_ASSERT(a == b);
+}
+
 /**
  * Main loop of the function.
  */
-int main(int argc, char **argv) {
-	cout << "Floyd serial algorithm." << endl;
+int main(void) {
+	   CU_pSuite sharedSuite = NULL;
 
-	std::ifstream fin("input.txt");
-	while (fin)
-		cout << fin;
+	   /* Initialize the CUnit test registry. */
+	   if (CUE_SUCCESS != CU_initialize_registry())
+	      return CU_get_error();
 
-	return 0;
-}
+	   /* Add a suite to the registry. */
+	   sharedSuite = CU_add_suite("Shared Suite", suite_init, suite_clean);
+	   if (NULL == sharedSuite) {
+	      CU_cleanup_registry();
+	      return CU_get_error();
+	   }
+
+	   /* Add the tests to the suite. */
+	   if (
+	       (NULL == CU_add_test(sharedSuite, "Compare: Equal..............", test_compare_empty))
+	      )
+	   {
+	      CU_cleanup_registry();
+	      return CU_get_error();
+	   }
+
+	   /* Run all tests using the CUnit Basic interface */
+	   CU_basic_set_mode(CU_BRM_VERBOSE);
+	   CU_basic_run_tests();
+	   CU_cleanup_registry();
+	   return CU_get_error();}
 

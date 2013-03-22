@@ -14,13 +14,13 @@
 //#include <stdexcept> /* Derived exception classes. */
 
 /* STL Headers */
-//#include <vector> 
+//#include <vector>
 //#include <list>
-//#include <deque> 
+//#include <deque>
 //#include <stack>
 //#include <queue>
 //#include <priority_queue>
-//#include <bitset> 
+//#include <bitset>
 //#include <set> // multiset for multiple keys allowed.
 //#include <map> // multimap for multiple keys allowed.
 //#include <utility> // Has pair for map.
@@ -29,14 +29,15 @@
 
 /* C Headers */
 //#include <cstdlib>
-//#include <cstddef> 
-//#include <cctype> 
-//#include <cstring> 
-//#include <cstdio> 
-//#include <climits> 
-//#include <cassert> 
+//#include <cstddef>
+//#include <cctype>
+//#include <cstring>
+//#include <cstdio>
+//#include <climits>
+//#include <cassert>
 
 /* Project Headers */
+#include "lib_floyd.hpp"
 
 /******************* Constants/Macros *********************/
 
@@ -48,16 +49,16 @@ using std::endl;
 using std::string;
 
 /******************* Type Definitions *********************/
-/* For enums: Try to namesapce the common elements. 
+/* For enums: Try to namesapce the common elements.
  * typedef enum {
  *	VAL_,
- * } name_e; 
+ * } name_e;
  */
 
-/* For structs: 
+/* For structs:
  * typedef struct name_s {
  *	int index;
- * } name_t;  
+ * } name_t;
  */
 
 /**************** Static Data Definitions *****************/
@@ -65,16 +66,26 @@ using std::string;
 
 /****************** Class Definitions *********************/
 
+void floyd::lib_test(int a) {
+	cout << "Number: " << a << endl;
+}
+
+void floyd::lib_read_adjacency(std::istream& in, int **matrix) {
+	int nodes;
+	in >> nodes;
+
+	matrix = new int[nodes][nodes];
+
+	for (int i = 0; i < nodes; ++i)
+		for (int j = 0; j < nodes; ++j)
+			in >> matrix[i][j];
+}
 
 /****************** Static Functions **********************/
 
 
 /****************** Global Functions **********************/
-/**
- * Main loop of the function.
- */
-int main(void) {
-	
-	return 0;
-}
+
+
+
 

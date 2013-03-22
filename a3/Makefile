@@ -12,7 +12,8 @@ EXE_DIR=./demo
 # Commands and Flags, cflags + f_debug are for gcc flags. Include and LD_Flags are where to find headers and libraries.
 CC:=mpiCC
 RM:=@rm -rf
-CFLAGS:=-std=c99
+CFLAGS:=-weffc++
+CXXFLAGS:=-Weffc++
 F_DEBUG:=-ggdb -Wall -Wextra -Winline -pedantic
 INCLUDE:=-I./cunit/include 
 LD_PATH:=-L./cunit/lib
@@ -39,6 +40,9 @@ $(EXE_DIR)/%: %.o
 
 %.o: $(SRC_DIR)/%.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(F_DEBUG) -o $@ -c $< 
+
+%.o: $(SRC_DIR)/%.cpp
+	$(CC) $(INCLUDE) $(CXXFLAGS) $(F_DEBUG) -o $@ -c $< 
 
 # Rules to build and clean
 all: $(LIB_ARC) $(EXES)
