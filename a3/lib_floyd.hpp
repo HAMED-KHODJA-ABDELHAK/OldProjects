@@ -3,8 +3,8 @@
 
 /********************* Header Files ***********************/
 /* C++ Headers */
-//#include <iostream> /* Input/output objects. */
-//#include <fstream> /* File operations. */
+#include <iostream> /* Input/output objects. */
+#include <fstream> /* File operations. */
 //#include <sstream> /* String stream. */
 //#include <string> /* C++ String class. */
 //#include <new> /* Defines bad_malloc exception, new functions. */
@@ -38,7 +38,7 @@
 /* Project Headers */
 
 /******************* Constants/Macros *********************/
-
+#define INF			1000
 
 /******************* Type Definitions *********************/
 /* For enums: Try to namesapce the common elements.
@@ -54,11 +54,30 @@
  */
 
 /****************** Class Definitions *********************/
+/*
+ * Public fields reduce this to mostly a struct.
+ */
 namespace floyd {
-	void lib_test(int a);
+	class Matrix {
+	public:
+		Matrix() : size(0), a(NULL) { }
+		Matrix(int _size);
+		Matrix(const Matrix& m);
+		virtual ~Matrix();
+		Matrix& operator=(const Matrix& o);
 
-	void lib_read_adjacency(std::istream& in, int **matrix);
+		/* Functions */
+		void read(std::istream& in);
+		void print(std::ostream& out);
+
+		/* Public vars by design, not good oop. */
+		int size;
+		int **a;
+	};
+
+	void init_path(Matrix& p);
 }
+
 /********************* Prototypes *************************/
 
 

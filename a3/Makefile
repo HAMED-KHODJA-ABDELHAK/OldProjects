@@ -53,4 +53,4 @@ $(LIB_ARC): $(LIB_OBJS)
 	$(RM) $^	
 
 clean:
-	$(RM) $(EXES) $(LIB_ARC) core.* input.txt* output.txt* log* $(FILES_TO_CLEAN)          
+	$(RM) $(EXES) $(LIB_ARC) core.* output.txt* log* $(FILES_TO_CLEAN)          
