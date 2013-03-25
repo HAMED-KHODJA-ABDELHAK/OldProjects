@@ -153,8 +153,8 @@ void serial_shortest(Matrix& cost, Matrix& path) {
 				}
 			}
 		}
-		cout << "Cost matrix at round " << k << endl;
-		cost.print(cout);
+//		cout << "Cost matrix at round " << k << endl;
+//		cost.print(cout);
 
 		MPI::COMM_WORLD.Barrier();
 	}
