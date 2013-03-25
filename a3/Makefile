@@ -12,8 +12,8 @@ EXE_DIR=./demo
 # Commands and Flags, cflags + f_debug are for gcc flags. Include and LD_Flags are where to find headers and libraries.
 CC:=mpiCC
 RM:=@rm -rf
-CFLAGS:=-weffc++
-CXXFLAGS:=-Weffc++
+CFLAGS:=-std=c99
+CXXFLAGS:=#-Weffc++
 F_DEBUG:=-ggdb -Wall -Wextra -Winline -pedantic
 INCLUDE:=-I./cunit/include 
 LD_PATH:=-L./cunit/lib
@@ -31,8 +31,10 @@ FILES_TO_CLEAN:=*.o *.a *.out *.exe *~ temp.* *.gcov *.gcda *.gcno
 
 # Target executables to build
 EXES = \
-	$(EXE_DIR)/floyd_serial \
-	$(EXE_DIR)/test_floyd_serial
+	$(EXE_DIR)/serial_floyd \
+	$(EXE_DIR)/parallel_floyd \
+	$(EXE_DIR)/pipeline_floyd \
+	$(EXE_DIR)/test_floyd
 
 # Custom rules, define how to link and compile respectively.
 $(EXE_DIR)/%: %.o 
