@@ -43,6 +43,7 @@
 
 /* Project Headers */
 #include "lib_floyd.hpp"
+#include "mpi.h"
 
 /******************* Constants/Macros *********************/
 #define OUTPUT		"output.txt"
@@ -71,10 +72,16 @@ string make_path(const int i, const int j, const Matrix& dist, const Matrix& p);
 /**
  * Main loop of the function.
  */
-int main(void) {
+int main(int argc, char **argv) {
+	double start;
 	int num;
 	cout << "Floyd serial algorithm." << endl;
 
+	/* Init mpi and time function. */
+	MPI_Init(&argc, &argv);
+	start = MPI_Wtime();
+
+	/* Open input and make matrices. */
 	std::ifstream fin("input.txt", std::ifstream::in);
 	fin >> num;
 	Matrix c(num); /* Cost matrix. */
@@ -92,12 +99,18 @@ int main(void) {
 	cout << "The shortest path matrix." << endl;
 	c.print(cout);
 
-	cout << "Path from node 2 -> 4 has cost " << c.a[1][3] << " and is: 2 " << make_path(1, 3, c, p) << " 4 " << endl;
+	cout << "Path from node 2 -> 4 has cost " << c.a[1][3] << " and is: 2 " << make_path(1, 0, c, p) << " 1 " << endl;
 	p.print(cout);
+
+	cout << "Time elapsed from MPI_Init to MPI_Finalize is " << MPI_Wtime() - start << " seconds.\n";
+	MPI_Finalize();
 
 	return 0;
 }
 
+/*
+ * Find the shortest path, path is simply used to trace back the shortest path.
+ */
 void serial_shortest(Matrix& cost, Matrix& path) {
 	for (int k = 0; k < cost.size; ++k) {
 		for (int i = 0; i < cost.size; ++i) {
@@ -114,6 +127,7 @@ void serial_shortest(Matrix& cost, Matrix& path) {
 
 /*
  * Get the path from node i to j (zero index) with distance and path matrices.
+ * You need to put i and j around what is returned from this function.
  */
 string make_path(const int i, const int j, const Matrix& dist, const Matrix& p) {
 	if (dist.a[i][j] == INF)
@@ -124,6 +138,7 @@ string make_path(const int i, const int j, const Matrix& dist, const Matrix& p) 
 	if (mid == INF) {
 		return string(" ");
 	}
+
 	std::stringstream line;
 	line << make_path(i, mid, dist, p) << mid+1 << make_path(mid, j, dist, p);
 
