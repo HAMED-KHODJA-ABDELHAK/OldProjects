@@ -32,15 +32,15 @@
 //#include <cctype>
 //#include <cstring>
 //#include <cstdio>
-//#include <climits>
+#include <climits>
 //#include <cassert>
 
 /* Project Headers */
 
 /******************* Constants/Macros *********************/
-#define INF			1000
+#define INF			10000
 #define OUTPUT		"output.txt"
-#define INPUT		"input.txt"
+#define INPUT		"input2.txt"
 
 /******************* Type Definitions *********************/
 /* For enums: Try to namesapce the common elements.

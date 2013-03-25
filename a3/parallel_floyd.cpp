@@ -75,7 +75,6 @@ string make_path(const int i, const int j, const Matrix& dist, const Matrix& p);
 int main(int argc, char **argv) {
 	double start(0.0);
 	int num(0), i(0), j(0);
-	cout << "Floyd serial algorithm." << endl;
 
 	/* Init mpi and time function. */
 	MPI_Init(&argc, &argv);
@@ -96,11 +95,12 @@ int main(int argc, char **argv) {
 	fout << "The original cost matrix." << endl;
 	c.print(fout);
 
+	/* Function to compute paths. */
 	serial_shortest(c, p);
 
+	/* Final result and time. */
 	fout << "The shortest path matrix." << endl;
 	c.print(fout);
-
 	fout << "Time elapsed from MPI_Init to MPI_Finalize is " << MPI_Wtime() - start << " seconds.\n";
 	cout << "Check output.txt for results of the operation once done with query." << endl;
 	fout.close();
@@ -142,6 +142,8 @@ void serial_shortest(Matrix& cost, Matrix& path) {
 				}
 			}
 		}
+		cout << "Cost matrix at round " << k << endl;
+		cost.print(cout);
 	}
 }
 
