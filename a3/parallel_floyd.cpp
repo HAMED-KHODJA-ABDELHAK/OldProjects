@@ -93,21 +93,23 @@ int main(int argc, char **argv) {
 
 	/* Expect cost matrix to be in input.txt */
 	c.read(fin);
-	cout << "The original cost matrix." << endl;
-	c.print(cout);
+	fout << "The original cost matrix." << endl;
+	c.print(fout);
 
 	serial_shortest(c, p);
 
-	cout << "The shortest path matrix." << endl;
-	c.print(cout);
+	fout << "The shortest path matrix." << endl;
+	c.print(fout);
 
-	cout << "Time elapsed from MPI_Init to MPI_Finalize is " << MPI_Wtime() - start << " seconds.\n";
+	fout << "Time elapsed from MPI_Init to MPI_Finalize is " << MPI_Wtime() - start << " seconds.\n";
+	cout << "Check output.txt for results of the operation once done with query." << endl;
+	fout.close();
 	MPI_Finalize();
 
 	/* Query interface, query about any shortest path to get nodes. Zero indexed as always. */
 	while (true) {
-		cout << "Enter an i and j and I will tell you the shortest path." << endl <<
-				"Enter -1 on either to quit." << endl;
+		cout << "Enter an i and j and I will tell you the shortest path and cost." << endl <<
+				"Enter -1 on both to quit." << endl;
 
 		cin >> i >> j;
 
@@ -116,10 +118,11 @@ int main(int argc, char **argv) {
 			continue;
 		}
 
-		if (-1 == i || -1 == j)
+		if (-1 == i && -1 == j)
 			break;
 
-		cout << "The path from path is: " << i << " " << make_path(i, j, c, p) << " " << j << " " << endl;
+		cout << "The path from path is: " << i << " " << make_path(i, j, c, p) << " " << j << " " << endl
+				<< "The cost of the path is: " << c.a[i][j] << endl;
 	}
 
 	return 0;

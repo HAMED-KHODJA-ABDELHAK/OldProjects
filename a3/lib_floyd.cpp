@@ -140,7 +140,6 @@ void Matrix::read(std::istream& in) {
 
 	while (in >> i && in >> j && in.good()) {
 		in >> a[i][j];
-		cout << a[i][j] << endl;
 	}
 }
 
@@ -153,21 +152,22 @@ void Matrix::print(std::ostream& out) {
 	for (int i = 0; i < size; ++i) {
 		for (int j = 0; j < size; ++j) {
 			if (j == 0)
-				cout << i << ": ";
+				out << i << ": ";
 
-			cout << a[i][j] << " ";
+			out << a[i][j] << " ";
 
 			if (j == size-1)
-				cout << endl;
+				out << endl;
 		}
 	}
 }
 
+/*
+ * Simple helper, the path matrix should start all values at INF.
+ */
 void floyd::init_path(Matrix& p) {
 	for (int i = 0; i < p.size; ++i) {
-		for (int j = 0; j < p.size; ++j) {
-			p.a[i][j] = INF;
-		}
+		p.a[i][i] = INF;
 	}
 }
 
