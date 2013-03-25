@@ -106,32 +106,36 @@ int main(int argc, char **argv) {
 	serial_shortest(c, p);
 
 	/* Final result and time. */
-	fout << "The shortest path matrix." << endl;
-	c.print(fout);
-	fout << "Time elapsed from MPI_Init to MPI_Finalize is " << MPI_Wtime() - start << " seconds.\n";
-	cout << "Check output.txt for results of the operation once done with query." << endl;
+	if (id == MASTER) {
+		fout << "The shortest path matrix." << endl;
+		c.print(fout);
+		fout << "Time elapsed from MPI_Init to MPI_Finalize is " << MPI_Wtime() - start << " seconds.\n";
+		cout << "Check output.txt for results of the operation once done with query." << endl;
+	}
+
 	fout.close();
 	MPI_Finalize();
 
-	/* Query interface, query about any shortest path to get nodes. Zero indexed as always. */
-	while (true) {
-		cout << "Enter an i and j and I will tell you the shortest path and cost." << endl <<
-				"Enter -1 on both to quit." << endl;
+	if (id == MASTER) {
+		/* Query interface, query about any shortest path to get nodes. Zero indexed as always. */
+		while (true) {
+			cout << "Enter an i and j and I will tell you the shortest path and cost." << endl <<
+					"Enter -1 on both to quit." << endl;
 
-		cin >> i >> j;
+			cin >> i >> j;
 
-		if (i > c.size || j > c.size || i < 0 || j < 0) {
-			cout << "Numbers out of range. Only 0 - " << c.size-1 << " allowed." << endl;
-			continue;
+			if (i > c.size || j > c.size || i < 0 || j < 0) {
+				cout << "Numbers out of range. Only 0 - " << c.size-1 << " allowed." << endl;
+				continue;
+			}
+
+			if (-1 == i && -1 == j)
+				break;
+
+			cout << "The path from path is: " << i << make_path(i, j, c, p) << j << " " << endl
+					<< "The cost of the path is: " << c.a[i][j] << endl;
 		}
-
-		if (-1 == i && -1 == j)
-			break;
-
-		cout << "The path from path is: " << i << make_path(i, j, c, p) << j << " " << endl
-				<< "The cost of the path is: " << c.a[i][j] << endl;
 	}
-
 	return 0;
 }
 

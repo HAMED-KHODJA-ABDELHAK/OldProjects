@@ -41,6 +41,7 @@
 #define INF			10000
 #define OUTPUT		"output.txt"
 #define INPUT		"input2.txt"
+#define MASTER		0
 
 /******************* Type Definitions *********************/
 /* For enums: Try to namesapce the common elements.
