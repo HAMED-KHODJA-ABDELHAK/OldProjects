@@ -95,20 +95,11 @@ void test_compare_empty(void) {
     CU_ASSERT(a == b);
 }
 
-string test() {
-	return string(" world.");
-}
-
 /**
  * Main loop of the function.
  */
 int main(void) {
 	   CU_pSuite sharedSuite = NULL;
-
-	   string first("hello"), second(" hello.");
-
-	   first += test();
-	   cout << endl << endl << first << endl;
 
 	   /* Initialize the CUnit test registry. */
 	   if (CUE_SUCCESS != CU_initialize_registry())

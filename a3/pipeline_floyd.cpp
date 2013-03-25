@@ -46,7 +46,7 @@
 #include "mpi.h"
 
 /******************* Constants/Macros *********************/
-#define OUTPUT		"output.txt"
+
 
 /**************** Namespace Declarations ******************/
 using std::cin;
@@ -73,8 +73,8 @@ string make_path(const int i, const int j, const Matrix& dist, const Matrix& p);
  * Main loop of the function.
  */
 int main(int argc, char **argv) {
-	double start;
-	int num;
+	double start(0.0);
+	int num(0), i(0), j(0);
 	cout << "Floyd serial algorithm." << endl;
 
 	/* Init mpi and time function. */
@@ -82,14 +82,16 @@ int main(int argc, char **argv) {
 	start = MPI_Wtime();
 
 	/* Open input and make matrices. */
-	std::ifstream fin("input.txt", std::ifstream::in);
+	std::ifstream fin(INPUT, std::ifstream::in);
+	std::ofstream fout(OUTPUT, std::ofstream::out);
 	fin >> num;
 	Matrix c(num); /* Cost matrix. */
 	Matrix p(num); /* Path matrix. */
 
+	/* Path gets completely initialized to infinity. */
 	floyd::init_path(p);
-	p.print(cout);
 
+	/* Expect cost matrix to be in input.txt */
 	c.read(fin);
 	cout << "The original cost matrix." << endl;
 	c.print(cout);
@@ -99,11 +101,26 @@ int main(int argc, char **argv) {
 	cout << "The shortest path matrix." << endl;
 	c.print(cout);
 
-	cout << "Path from node 2 -> 4 has cost " << c.a[1][3] << " and is: 2 " << make_path(1, 0, c, p) << " 1 " << endl;
-	p.print(cout);
-
 	cout << "Time elapsed from MPI_Init to MPI_Finalize is " << MPI_Wtime() - start << " seconds.\n";
 	MPI_Finalize();
+
+	/* Query interface, query about any shortest path to get nodes. Zero indexed as always. */
+	while (true) {
+		cout << "Enter an i and j and I will tell you the shortest path." << endl <<
+				"Enter -1 on either to quit." << endl;
+
+		cin >> i >> j;
+
+		if (i > c.size || j > c.size || i < 0 || j < 0) {
+			cout << "Numbers out of range. Only 0 - " << c.size-1 << " allowed." << endl;
+			continue;
+		}
+
+		if (-1 == i || -1 == j)
+			break;
+
+		cout << "The path from path is: " << i << " " << make_path(i, j, c, p) << " " << j << " " << endl;
+	}
 
 	return 0;
 }
@@ -140,7 +157,7 @@ string make_path(const int i, const int j, const Matrix& dist, const Matrix& p) 
 	}
 
 	std::stringstream line;
-	line << make_path(i, mid, dist, p) << mid+1 << make_path(mid, j, dist, p);
+	line << make_path(i, mid, dist, p) << mid << make_path(mid, j, dist, p);
 
 	return line.str();
 }

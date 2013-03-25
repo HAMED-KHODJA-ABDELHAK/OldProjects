@@ -39,6 +39,8 @@
 
 /******************* Constants/Macros *********************/
 #define INF			1000
+#define OUTPUT		"output.txt"
+#define INPUT		"input.txt"
 
 /******************* Type Definitions *********************/
 /* For enums: Try to namesapce the common elements.
