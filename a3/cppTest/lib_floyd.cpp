@@ -71,8 +71,19 @@ using floyd::Matrix;
  */
 Matrix::Matrix(int _size) : size(_size) {
 	a = new int*[size];
-	for (int i = 0; i < size; ++i)
+	for (int i = 0; i < size; ++i) {
 		a[i] = new int[size];
+
+		for (int j = 0; j < size; ++j) {
+			if (j == i) {
+				a[i][j] = 0;
+			} else {
+				a[i][j] = INF;
+			}
+		}
+
+	}
+
 }
 
 /*
@@ -121,12 +132,14 @@ Matrix& Matrix::operator=(const Matrix& o) {
 
 /*
  * Read values from istream into the array.
+ * Format: i j value.
+ * Example: 1 2 4 means edge from 1 to 2 with cost 4.
  */
-void Matrix::read(std::istream& values) {
-	for (int i = 0; i < size; ++i) {
-		for (int j = 0; j < size; ++j) {
-			values >> a[i][j];
-		}
+void Matrix::read(std::istream& in) {
+	int i(0), j(0);
+
+	while (in >> i && in >> j && in.good()) {
+		in >> a[i][j];
 	}
 }
 
@@ -139,13 +152,22 @@ void Matrix::print(std::ostream& out) {
 	for (int i = 0; i < size; ++i) {
 		for (int j = 0; j < size; ++j) {
 			if (j == 0)
-				cout << i << ": ";
+				out << i << ": ";
 
-			cout << a[i][j] << " ";
+			out << a[i][j] << " ";
 
 			if (j == size-1)
-				cout << endl;
+				out << endl;
 		}
+	}
+}
+
+/*
+ * Simple helper, the path matrix should start all values at INF.
+ */
+void floyd::init_path(Matrix& p) {
+	for (int i = 0; i < p.size; ++i) {
+		p.a[i][i] = INF;
 	}
 }
 

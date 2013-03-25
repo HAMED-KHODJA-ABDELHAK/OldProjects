@@ -39,6 +39,8 @@
 
 /******************* Constants/Macros *********************/
 #define INF			10000
+#define OUTPUT		"output.txt"
+#define INPUT		"input2.txt"
 
 /******************* Type Definitions *********************/
 /* For enums: Try to namesapce the common elements.
@@ -53,17 +55,10 @@
  * } name_t;
  */
 
-/*
- * Simple structure, wraps a 2d array and size.
- * Array is always sizexsize large. Malloced on the heap.
- */
-typedef struct array_s {
-	int size;
-	int **ar;
-} array_t;
-
 /****************** Class Definitions *********************/
-
+/*
+ * Public fields reduce this to mostly a struct.
+ */
 namespace floyd {
 	class Matrix {
 	public:
@@ -76,13 +71,13 @@ namespace floyd {
 		/* Functions */
 		void read(std::istream& in);
 		void print(std::ostream& out);
-		int get_size() { return size; }
-		int** get_array() { return a; }
 
-	private:
+		/* Public vars by design, not good oop. */
 		int size;
 		int **a;
 	};
+
+	void init_path(Matrix& p);
 }
 
 /********************* Prototypes *************************/

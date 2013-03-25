@@ -84,10 +84,9 @@ int main(int argc, char **argv) {
 	std::ifstream fin(INPUT, std::ifstream::in);
 	std::ofstream fout(OUTPUT, std::ofstream::out);
 	fin >> num;
+
 	Matrix c(num); /* Cost matrix. */
 	Matrix p(num); /* Path matrix. */
-
-	/* Path gets completely initialized to infinity. */
 	floyd::init_path(p);
 
 	/* Expect cost matrix to be in input.txt */

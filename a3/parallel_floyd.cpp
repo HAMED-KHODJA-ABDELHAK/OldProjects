@@ -6,6 +6,7 @@
  * i	j	cost
  * Reads from node i to node j the edge has cost to travel.
  * If you want undirected graph you'll put one i,j pair then j,i pair.
+ * There can be NO negative cycles in the graph, else the algorithm will produce bad output.
  */
 /********************* Header Files ***********************/
 /* C++ Headers */
@@ -74,11 +75,13 @@ string make_path(const int i, const int j, const Matrix& dist, const Matrix& p);
  */
 int main(int argc, char **argv) {
 	double start(0.0);
-	int num(0), i(0), j(0);
+	int num(0), i(0), j(0), id(0), world(0);
 
 	/* Init mpi and time function. */
 	MPI_Init(&argc, &argv);
 	start = MPI_Wtime();
+	id = MPI::COMM_WORLD.Get_rank();
+	world = MPI::COMM_WORLD.Get_size();
 
 	/* Open input and make matrices. */
 	std::ifstream fin(INPUT, std::ifstream::in);
@@ -86,11 +89,15 @@ int main(int argc, char **argv) {
 	fin >> num;
 	Matrix c(num); /* Cost matrix. */
 	Matrix p(num); /* Path matrix. */
-
-	/* Path gets completely initialized to infinity. */
 	floyd::init_path(p);
 
-	/* Expect cost matrix to be in input.txt */
+	/* Ensure we have even split amongst processors. */
+	if ((num % world) != 0) {
+		cout << "Please choose a number of processors that divide cleanly into nodes." << endl;
+		return 1;
+	}
+
+	/* Expect cost matrix to be in INPUT file. */
 	c.read(fin);
 	fout << "The original cost matrix." << endl;
 	c.print(fout);
@@ -121,7 +128,7 @@ int main(int argc, char **argv) {
 		if (-1 == i && -1 == j)
 			break;
 
-		cout << "The path from path is: " << i << " " << make_path(i, j, c, p) << " " << j << " " << endl
+		cout << "The path from path is: " << i << make_path(i, j, c, p) << j << " " << endl
 				<< "The cost of the path is: " << c.a[i][j] << endl;
 	}
 
@@ -144,6 +151,8 @@ void serial_shortest(Matrix& cost, Matrix& path) {
 		}
 		cout << "Cost matrix at round " << k << endl;
 		cost.print(cout);
+
+		MPI::COMM_WORLD.Barrier();
 	}
 }
 
