@@ -81,6 +81,8 @@ namespace floyd {
     };
 
     void init_path(Matrix& p);
+    int lib_power(const int base, const unsigned int exp);
+    int lib_sqrt(const unsigned int val);
 }
 
 /********************* Prototypes *************************/

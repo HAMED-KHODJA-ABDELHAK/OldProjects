@@ -223,6 +223,43 @@ void floyd::init_path(Matrix& p) {
     }
 }
 
+/*
+* Integer power function, takes log(n) steps to compute.
+*/
+int floyd::lib_power(const int base, const unsigned int exp) {
+    int temp;
+
+    if (exp == 0)
+        return 1;
+
+    // Odd power.
+    if (exp % 2) {
+        temp = floyd::lib_power(base, (exp-1)/2);
+        return temp * temp * base;
+    } else {
+        temp = floyd::lib_power(base, exp/2);
+        return temp * temp;
+    }
+}
+
+/*
+ * Check if value has a simple square root. Val must be greater than zero.
+ * If it has simple integer root, return it. Else return zero.
+ */
+int floyd::lib_sqrt(const unsigned int val) {
+    int root = 1, root_sq = root * root;
+
+    while (root_sq < val) {
+        if ((val - root_sq) == 0)
+            return root;
+
+        root += 1;
+        root_sq = root * root;
+    }
+
+    return 0;
+}
+
 /****************** Static Functions **********************/
 
 

@@ -41,6 +41,7 @@
 //#include <cstdio>
 //#include <climits>
 //#include <cassert>
+//#include <cmath>
 
 /* Project Headers */
 #include "lib_floyd.hpp"
@@ -74,90 +75,98 @@ string make_path(const int i, const int j, const Matrix& dist, const Matrix& p);
  * Main loop of the function.
  */
 int main(int argc, char **argv) {
-	double start(0.0);
-	int num(0), i(0), j(0), id(0), world(0);
+    double start(0.0);
+    int num(0), i(0), j(0), id(0), world(0);
 
-	/* Init mpi and time function. */
-	MPI_Init(&argc, &argv);
-	start = MPI_Wtime();
-	id = MPI::COMM_WORLD.Get_rank();
-	world = MPI::COMM_WORLD.Get_size();
+    /* Init mpi and time function. */
+    MPI_Init(&argc, &argv);
+    start = MPI_Wtime();
+    id = MPI::COMM_WORLD.Get_rank();
+    world = MPI::COMM_WORLD.Get_size();
 
-	/* Open input and make matrices. */
-	std::ifstream fin(INPUT, std::ifstream::in);
-	std::ofstream fout(OUTPUT, std::ofstream::out);
-	fin >> num;
-	Matrix c(num); /* Cost matrix. */
-	Matrix p(num); /* Path matrix. */
-	floyd::init_path(p);
+    /* Open input and make matrices. */
+    std::ifstream fin(INPUT, std::ifstream::in);
+    std::ofstream fout(OUTPUT, std::ofstream::out);
+    fin >> num;
+    Matrix c(num); /* Cost matrix. */
+    Matrix p(num); /* Path matrix. */
+    floyd::init_path(p);
 
-	/* Ensure we have even split amongst processors. */
-	if ((num % world) != 0) {
-		cout << "Please choose a number of processors that divide cleanly into nodes." << endl;
-		return 1;
-	}
+    /* Ensure we have even split amongst processors. */
+    if ((num % world) != 0) {
+        cout << "Please choose a number of processors that divide cleanly into nodes." << endl;
+        return 1;
+    }
 
-	/* Expect cost matrix to be in INPUT file. */
-	c.read(fin);
-	fout << "The original cost matrix." << endl;
-	c.print(fout);
+    /* Ensure we have an even sqrt(p) value. */
+    int root = floyd::lib_sqrt(world);
+    if (root == 0) {
+        cout << "The number of processors must have even square root values." << endl
+            << "For example, p = 16, root = 4." << endl;
+        return 1;
+    }
 
-	/* Function to compute paths. */
-	serial_shortest(c, p);
+    /* Expect cost matrix to be in INPUT file. */
+    c.read(fin);
+    fout << "The original cost matrix." << endl;
+    c.print(fout);
 
-	/* Final result and time. */
-	if (id == MASTER) {
-		fout << "The shortest path matrix." << endl;
-		c.print(fout);
-		fout << "Time elapsed from MPI_Init to MPI_Finalize is " << MPI_Wtime() - start << " seconds.\n";
-		cout << "Check output.txt for results of the operation once done with query." << endl;
-	}
+    /* Function to compute paths. */
+    serial_shortest(c, p);
 
-	fout.close();
-	MPI_Finalize();
+    /* Final result and time. */
+    if (id == MASTER) {
+        fout << "The shortest path matrix." << endl;
+        c.print(fout);
+        fout << "Time elapsed from MPI_Init to MPI_Finalize is " << MPI_Wtime() - start << " seconds.\n";
+        cout << "Check output.txt for results of the operation once done with query." << endl;
+    }
 
-	if (id == MASTER) {
-		/* Query interface, query about any shortest path to get nodes. Zero indexed as always. */
-		while (true) {
-			cout << "Enter an i and j and I will tell you the shortest path and cost." << endl <<
-					"Enter -1 on both to quit." << endl;
+    fout.close();
+    MPI_Finalize();
 
-			cin >> i >> j;
+    if (id == MASTER) {
+        /* Query interface, query about any shortest path to get nodes. Zero indexed as always. */
+        while (true) {
+            cout << "Enter an i and j and I will tell you the shortest path and cost." << endl <<
+                    "Enter -1 on both to quit." << endl;
 
-			if (i > c.size || j > c.size || i < 0 || j < 0) {
-				cout << "Numbers out of range. Only 0 - " << c.size-1 << " allowed." << endl;
-				continue;
-			}
+            cin >> i >> j;
 
-			if (-1 == i && -1 == j)
-				break;
+            if (i > c.size || j > c.size || i < 0 || j < 0) {
+                cout << "Numbers out of range. Only 0 - " << c.size-1 << " allowed." << endl;
+                continue;
+            }
 
-			cout << "The path from path is: " << i << make_path(i, j, c, p) << j << " " << endl
-					<< "The cost of the path is: " << c.a[i][j] << endl;
-		}
-	}
-	return 0;
+            if (-1 == i && -1 == j)
+                break;
+
+            cout << "The path from path is: " << i << make_path(i, j, c, p) << j << " " << endl
+                    << "The cost of the path is: " << c.a[i][j] << endl;
+        }
+    }
+    return 0;
 }
 
 /*
  * Find the shortest path, path is simply used to trace back the shortest path.
  */
 void serial_shortest(Matrix& cost, Matrix& path) {
-	for (int k = 0; k < cost.size; ++k) {
-		for (int i = 0; i < cost.size; ++i) {
-			for (int j = 0; j < cost.size; ++j) {
-				int new_dist = cost.a[i][k] + cost.a[k][j];
-				if (new_dist < cost.a[i][j]) {
-					cost.a[i][j] = new_dist;
-					path.a[i][j] = k;
-				}
-			}
-		}
+    for (int k = 0; k < cost.size; ++k) {
+        for (int i = 0; i < cost.size; ++i) {
+            for (int j = 0; j < cost.size; ++j) {
+                int new_dist = cost.a[i][k] + cost.a[k][j];
+                if (new_dist < cost.a[i][j]) {
+                    cost.a[i][j] = new_dist;
+                    path.a[i][j] = k;
+                }
+            }
+        }
 //		cout << "Cost matrix at round " << k << endl;
 //		cost.print(cout);
 
-		MPI::COMM_WORLD.Barrier();
-	}
+        MPI::COMM_WORLD.Barrier();
+    }
 }
 
 /*
@@ -165,17 +174,17 @@ void serial_shortest(Matrix& cost, Matrix& path) {
  * You need to put i and j around what is returned from this function.
  */
 string make_path(const int i, const int j, const Matrix& dist, const Matrix& p) {
-	if (dist.a[i][j] == INF)
-		return string("NO PATH.");
+    if (dist.a[i][j] == INF)
+        return string("NO PATH.");
 
-	int mid = p.a[i][j];
+    int mid = p.a[i][j];
 
-	if (mid == INF) {
-		return string(" ");
-	}
+    if (mid == INF) {
+        return string(" ");
+    }
 
-	std::stringstream line;
-	line << make_path(i, mid, dist, p) << mid << make_path(mid, j, dist, p);
+    std::stringstream line;
+    line << make_path(i, mid, dist, p) << mid << make_path(mid, j, dist, p);
 
-	return line.str();
+    return line.str();
 }
