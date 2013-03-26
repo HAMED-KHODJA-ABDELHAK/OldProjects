@@ -61,24 +61,26 @@
  * Public fields reduce this to mostly a struct.
  */
 namespace floyd {
-	class Matrix {
-	public:
-		Matrix() : size(0), a(NULL) { }
-		Matrix(int _size);
-		Matrix(const Matrix& m);
-		virtual ~Matrix();
-		Matrix& operator=(const Matrix& o);
+    class Matrix {
+    public:
+        Matrix() : size(0), a(NULL) { }
+        Matrix(int _size);
+        Matrix(const Matrix& m);
+        virtual ~Matrix();
+        Matrix& operator=(const Matrix& o);
 
-		/* Functions */
-		void read(std::istream& in);
-		void print(std::ostream& out);
+        /* Functions */
+        void read(std::istream& in);
+        void print(std::ostream& out);
+        void str_init(std::string& line);
+        std::string str_send(int t_l_r, int t_l_c, int b_r_r, int b_r_c);
 
-		/* Public vars by design, not good oop. */
-		int size;
-		int **a;
-	};
+        /* Public vars by design, not good oop. */
+        int size;
+        int **a;
+    };
 
-	void init_path(Matrix& p);
+    void init_path(Matrix& p);
 }
 
 /********************* Prototypes *************************/
