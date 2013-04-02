@@ -81,21 +81,9 @@ void lib_init_path(int **p, int size) {
 	}
 }
 
-void lib_trace_matrix(FILE *f, int **a, int size) {
-	for (int i = 0; i < size; ++i) {
-		for (int j = 0; j < size; ++j) {
-			if (j == 0)
-				fprintf(f, "The row %5d: ", i);
-
-			fprintf(f, "%5d ", a[i][j]);
-
-			if (j == size-1)
-				fprintf(f, "\n");
-		}
-	}
-}
-
-
+/*
+ * Generate an edge cost between two nodes given a probability of connection prob.
+ */
 int lib_edge_cost(double prob) {
 	double p = (double) rand()/RAND_MAX;
 
@@ -119,3 +107,80 @@ void lib_generate_graph(int **c, int size) {
 		}
 	}
 }
+
+/*
+ * Dump a matrix to file in a nice 2D array format. Differs from below format.
+ */
+void lib_trace_matrix(FILE *f, int **a, int size) {
+	for (int i = 0; i < size; ++i) {
+		for (int j = 0; j < size; ++j) {
+			if (j == 0)
+				fprintf(f, "The row %5d: ", i);
+
+			fprintf(f, "%5d ", a[i][j]);
+
+			if (j == size-1)
+				fprintf(f, "\n");
+		}
+	}
+
+	fprintf(f, "\n\n");
+}
+
+/*
+ * Write out a cost matrix in a condensed format.
+ * Format of input.txt file is:
+ * node_size
+ * i	j	weight
+ * i	j	weight
+ * .....
+ */
+void lib_write_cost_matrix(const char *filename, int **c, const int size) {
+	FILE *f;
+
+	f = fopen(filename, "w");
+	if (f == NULL)
+		lib_error("WRITE_MATRIX: Failed to open file.");
+
+	fprintf(f, "%d\n", size);
+
+	for (int i = 0; i < size; ++i) {
+		for (int j = 0; j < size; ++j) {
+			if (c[i][j] != INF && i != j)
+				fprintf(f, "%d %d %d\n", i, j, c[i][j]);
+		}
+	}
+
+	fclose(f);
+}
+
+/*
+ * Read in a cost matrix from our defined format.
+ * Format of input.txt file is:
+ * node_size
+ * i	j	weight
+ * i	j	weight
+ * .....
+ */
+void lib_read_cost_matrix(const char *filename, int **c, const int size) {
+	int i = 0, j = 0, w = 0;
+	FILE *f;
+
+	f = fopen(filename, "r");
+	if (f == NULL)
+		lib_error("READ_MATRIX: Failed to open file.");
+
+	fscanf(f, "%d", &i);
+	if (size != i)
+		lib_error("READ_MATRIX: Node size of matrix and file do not agree.");
+
+	while (feof(f) == 0 && ferror(f) == 0) {
+		fscanf(f, "%d %d %d", &i, &j, &w);
+		if (i < 0 || j < 0 || i > size-1 || j > size-1)
+			continue;
+		c[i][j] = w;
+	}
+
+	fclose(f);
+}
+

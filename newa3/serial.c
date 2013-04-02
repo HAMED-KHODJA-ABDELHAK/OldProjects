@@ -8,9 +8,9 @@
  *
  * Arguments to serial:
  * nodes: The amount of nodes in a graph.
- * mode: Flag that optionally makes master generate a new input.
- * 		-> Use "gen" to generate new input.
- * 		-> Use "read" to use existing input.txt.
+ * mode: Flag that makes master generate a new input.
+ * 		-> Use "gen" to generate new input. OVERWRITES existing input file.
+ * 		-> Use anything else to use existing input.txt.
  */
 /********************* Header Files ***********************/
 /* C Headers */
@@ -27,17 +27,8 @@
 
 
 /******************* Type Definitions *********************/
-/*
- * Find the shortest path, path is simply used to trace back the shortest path.
- */
+
 void serial_shortest(int **c, int **p, int size);
-
-/*
- * Get the path from node i to j (zero index) with distance and path matrices.
- * You need to put i and j around what is returned from this function.
- */
-//void make_path(const int i, const int j, const Matrix& dist, const Matrix& p);
-
 
 /**************** Static Data Definitions *****************/
 
@@ -53,9 +44,10 @@ void serial_shortest(int **c, int **p, int size);
  * Main execution body.
  */
 int main(int argc, char **argv) {
-	int rank = 0, size = 0, nodes = 0;
+	int rank = 0, size = 0, nodes = 0, buf_size = 2000;
 	int *store_c = NULL, *store_p = NULL, **c = NULL, **p = NULL;
 	double start = 0.0;
+	char buf[buf_size];
 	FILE *log;
 
 	/* Standard init for MPI, start timer after init. */
@@ -63,8 +55,11 @@ int main(int argc, char **argv) {
 	start = MPI_Wtime();
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+	/* Init rand, open output log and memset buffer for path. */
 	srand(time(NULL));
 	log = fopen(OUTPUT, "w");
+	memset(buf, '\0', buf_size*sizeof(char));
 
 	if (rank == ROOT) {
 		if (argc < 3)
@@ -99,7 +94,7 @@ int main(int argc, char **argv) {
 	for (int i = 0; i < nodes; ++i)
 		p[i] = store_p+(i*nodes);
 
-	/* At this point, c and p are nxn matrices put on heap and freed later. Now initialize values. */
+	/* At this point, c and p are nxn matrices put on heap and freed later. Now initialise values. */
 	lib_init_cost(c, nodes);
 	lib_init_path(p, nodes);
 
@@ -107,26 +102,30 @@ int main(int argc, char **argv) {
 		/* If requested, generate new input file. */
 		if (strcmp(*++argv, GENERATE_FLAG) == 0) {
 			lib_generate_graph(c, nodes);
-			lib_trace_matrix(log, c, nodes);
-			fprintf(log, "\n\n");
-			lib_trace_matrix(log, p, nodes);
-			fprintf(log, "\n\n");
-//			lib_write_file(INPUT, vals, vals_size);
+			lib_write_cost_matrix(INPUT, c, nodes);
 		}
 
-		serial_shortest(c, p, nodes);
+		/* Read back input from file into array on heap. */
+		lib_read_cost_matrix(INPUT, c, nodes);
+		fprintf(log, "Initial arrays cost and path.\nCost:\n");
 		lib_trace_matrix(log, c, nodes);
-		fprintf(log, "\n\n");
+		fprintf(log, "Path:\n");
 		lib_trace_matrix(log, p, nodes);
-//
-//		/* Read back input from file into array on heap. */
-//		lib_read_file(INPUT, vals, vals_size);
-//
-//		/* Sort and output to file. */
-//		lib_write_file(OUTPUT, vals, vals_size);
+
+		serial_shortest(c, p, nodes);
+		fprintf(log, "After determining the shortest path.\nCost:\n");
+		lib_trace_matrix(log, c, nodes);
+		fprintf(log, "Path:\n");
+		lib_trace_matrix(log, p, nodes);
+
+		/* Dump final cost and path matrix to anaylze later. */
+		lib_write_cost_matrix(COST_FILE, c, nodes);
+		lib_write_cost_matrix(PATH_FILE, p, nodes);
+
 		fprintf(log, "Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
 	}
 
+	/* Clean up the heap allocation. */
 	free(c);
 	free(p);
 	free(store_c);
@@ -139,6 +138,7 @@ int main(int argc, char **argv) {
 
 /*
  * Find the shortest path, path is simply used to trace back the shortest path.
+ * This is the simplest form of the algorithm. K rounds of using k at every point in the matrix.
  */
 void serial_shortest(int **c, int **p, int size) {
 	for (int k = 0; k < size; ++k) {
@@ -151,27 +151,5 @@ void serial_shortest(int **c, int **p, int size) {
 				}
 			}
 		}
-//		printf("Cost matrix at round %d.\n", k);
-//		lib_trace_matrix(stdout, c, size);
 	}
-}
-
-/*
- * Get the path from node i to j (zero index) with distance and path matrices.
- * You need to put i and j around what is returned from this function.
- */
-void make_path(const int i, const int j, const int ** const c, const int ** const p, const int nodes) {
-	if (c[i][j] == INF)
-		return string("NO PATH.");
-
-	int mid = p[i][j];
-
-	if (mid == INF) {
-		return string(" ");
-	}
-
-//	std::stringstream line;
-//	line << make_path(i, mid, dist, p) << mid << make_path(mid, j, dist, p);
-//
-//	return line.str();
 }

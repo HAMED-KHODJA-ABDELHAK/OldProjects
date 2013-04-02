@@ -11,8 +11,10 @@ EXE_DIR=./demo
 
 # Commands and Flags, cflags + f_debug are for gcc flags. Include and LD_Flags are where to find headers and libraries.
 CC:=mpicc
+CXX:=mpiCC
 RM:=@rm -rf
 CFLAGS:=-std=c99
+CXXFLAGS:=
 F_DEBUG:=-ggdb -Wall -Wextra -Winline -pedantic
 INCLUDE:=-I./cunit/include 
 LD_PATH:=-L./cunit/lib
@@ -33,6 +35,8 @@ EXES = \
 	$(EXE_DIR)/serial \
 	$(EXE_DIR)/test_lib \
 	$(EXE_DIR)/random \
+	$(EXE_DIR)/parallel \
+	$(EXE_DIR)/path_creator \
 
 # Custom rules, define how to link and compile respectively.
 $(EXE_DIR)/%: %.o 
@@ -41,8 +45,15 @@ $(EXE_DIR)/%: %.o
 %.o: $(SRC_DIR)/%.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(F_DEBUG) -o $@ -c $< 
 
+%.o: $(SRC_DIR)/%.cpp
+	$(CXX) $(INCLUDE) $(CXXFLAGS) $(F_DEBUG) -o $@ -c $< 
+
 # Rules to build and clean
 all: $(LIB_ARC) $(EXES)
+	$(RM) path_creator.o
+
+$(EXE_DIR)/path_creator : path_creator.o
+	$(CXX) -o $@ $(LD_PATH) $< 
 
 $(LIB_ARC): $(LIB_OBJS)
 	$(AR) $@ $^ 
@@ -50,4 +61,4 @@ $(LIB_ARC): $(LIB_OBJS)
 	$(RM) $^	
 
 clean:
-	$(RM) $(EXES) $(LIB_ARC) core.* input.txt* output.txt* log* $(FILES_TO_CLEAN)          
+	$(RM) $(EXES) $(LIB_ARC) core.* output.txt* log* $(FILES_TO_CLEAN)          

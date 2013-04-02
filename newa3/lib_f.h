@@ -13,21 +13,13 @@
 #define INF					10000
 /* Root ID */
 #define ROOT                0
-#define INPUT				"input.txt"
+#define INPUT				"input3.txt"
 #define OUTPUT				"output.txt"
+#define COST_FILE			"cost.txt"
+#define PATH_FILE			"path.txt"
 
 /******************* Type Declarations ********************/
-/* For enums: Try to namesapce the common elements.
- * typedef enum {
- *	VAL_,
- * } name_e;
- */
 
-/* For structs:
- * typedef struct name_s {
- *	int index;
- * } name_t;
- */
 
 /********************** Prototypes ************************/
 /*
@@ -50,12 +42,6 @@ void lib_init_cost(int **c, int size);
  */
 void lib_init_path(int **p, int size);
 
-
-/*
- * Trace a given matrix to the file.
- */
-void lib_trace_matrix(FILE *f, int **a, int size);
-
 /*
  * Return a random integer value for edge, with probability p of being connected.
  */
@@ -66,6 +52,31 @@ int lib_edge_cost(double prob);
  * just to prevent having to deal with negative cycles that can break this aglorithm.
  */
 void lib_generate_graph(int **c, int size);
+
+/*
+ * Trace a given matrix to the file.
+ */
+void lib_trace_matrix(FILE *f, int **a, int size);
+
+/*
+ * Write out a cost matrix in a condensed format.
+ * Format of input.txt file is:
+ * node_size
+ * i	j	weight
+ * i	j	weight
+ * .....
+ */
+void lib_write_cost_matrix(const char *filename, int **c, const int size);
+
+/*
+ * Read in a cost matrix from our defined format.
+ * Format of input.txt file is:
+ * node_size
+ * i	j	weight
+ * i	j	weight
+ * .....
+ */
+void lib_read_cost_matrix(const char *filename, int **c, const int size);
 
 #endif /* _LIB_F_H_ */
 
