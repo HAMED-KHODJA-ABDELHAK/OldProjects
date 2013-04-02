@@ -109,7 +109,9 @@ int main(int argc, char **argv) {
 		lib_read_cost_matrix(INPUT, c, nodes);
 	}
 
+	MPI_Bcast(c, nodes*nodes, MPI_INT, ROOT, MPI_COMM_WORLD);
 	serial_shortest(c, p, nodes);
+	MPI_Gather(c+((rank-1)*nodes), nodes, MPI_INT, c, nodes, MPI_INT, ROOT, MPI_COMM_WORLD);
 
 	if (rank == ROOT) {
 		/* Dump final cost and path matrix to anaylze later. */
