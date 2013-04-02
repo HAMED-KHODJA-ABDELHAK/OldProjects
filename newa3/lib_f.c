@@ -18,17 +18,7 @@
 #define MAX_COST			10
 
 /******************* Type Definitions *********************/
-/* For enums: Try to namesapce the common elements.
- * typedef enum {
- *	VAL_,
- * } name_e;
- */
 
-/* For structs:
- * typedef struct nam_s {
- *	int index;
- * } name_t;
- */
 
 /**************** Static Data Definitions *****************/
 
