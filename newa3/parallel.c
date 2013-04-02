@@ -1,12 +1,13 @@
 /**
- * Reference implementation of floyd's algorithm serial implementation as baseline.
- * This program will only serially calculate the quicksort of the input file.
- * If you don't know the number of words in your input: cat input.txt | wc, second number is word count.
- * See mylib.h/.c for functions not in this file.
+ * Reference implementation of floyd's algorithm serial implementation parallel version.
+ * This implementation will start at root, distributing all work to the nodes then
+ * going through k rounds where we synch after each one the c/p matrices.
+ * At the end, we can gather the nodes back at root for final print to file.
  *
- * Use command: bsub -I -q COMP428 -n1 mpirun -srun ./demo/serial <nodes> <mode>
+ * Use command: bsub -I -q COMP428 -n <tasks> mpirun -srun ./demo/serial <nodes> <mode>
  *
  * Arguments to serial:
+ * tasks: Number of tasks to execute against. Due to nature of algorithm, ensure it is a squared even number: 4, 16, 36...
  * nodes: The amount of nodes in a graph.
  * mode: Flag that makes master generate a new input.
  * 		-> Use "gen" to generate new input. OVERWRITES existing input file.
@@ -44,10 +45,9 @@ void serial_shortest(int **c, int **p, int size);
  * Main execution body.
  */
 int main(int argc, char **argv) {
-	int rank = 0, size = 0, nodes = 0, buf_size = 2000;
+	int rank = 0, size = 0, nodes = 0;
 	int *store_c = NULL, *store_p = NULL, **c = NULL, **p = NULL;
 	double start = 0.0;
-	char buf[buf_size];
 	FILE *log;
 
 	/* Standard init for MPI, start timer after init. */
@@ -59,7 +59,6 @@ int main(int argc, char **argv) {
 	/* Init rand, open output log and memset buffer for path. */
 	srand(time(NULL));
 	log = fopen(OUTPUT, "w");
-	memset(buf, '\0', buf_size*sizeof(char));
 
 	if (rank == ROOT) {
 		if (argc < 3)
@@ -74,7 +73,7 @@ int main(int argc, char **argv) {
 	if (store_c == NULL)
 		lib_error("MAIN: Can't allocate storage for cost on heap.");
 
-	/* Take contiguous 1D array and make it 2D. */
+	/* Take contiguous 1D array and make c be a 2d pointer into it. */
 	c = (int **)malloc(nodes * sizeof(int*));
 	if (c == NULL)
 		lib_error("MAIN: Can't allocate cost pointers array on heap.");
@@ -87,6 +86,7 @@ int main(int argc, char **argv) {
 	if (store_p == NULL)
 		lib_error("MAIN: Can't allocate storage for path on heap.");
 
+	/* Take contiguous 1D array and make p be a 2d pointer into it. */
 	p = (int **)malloc(nodes * sizeof(int*));
 	if (p == NULL)
 		lib_error("MAIN: Can't allocate path pointers array on heap.");
@@ -94,11 +94,11 @@ int main(int argc, char **argv) {
 	for (int i = 0; i < nodes; ++i)
 		p[i] = store_p+(i*nodes);
 
-	/* At this point, c and p are nxn matrices put on heap and freed later. Now initialise values. */
-	lib_init_cost(c, nodes);
-	lib_init_path(p, nodes);
-
 	if (rank == ROOT) {
+		/* At this point, c and p are nxn matrices put on heap and freed later. Now initialise values. */
+		lib_init_cost(c, nodes);
+		lib_init_path(p, nodes);
+
 		/* If requested, generate new input file. */
 		if (strcmp(*++argv, GENERATE_FLAG) == 0) {
 			lib_generate_graph(c, nodes);
@@ -107,17 +107,11 @@ int main(int argc, char **argv) {
 
 		/* Read back input from file into array on heap. */
 		lib_read_cost_matrix(INPUT, c, nodes);
-		fprintf(log, "Initial arrays cost and path.\nCost:\n");
-		lib_trace_matrix(log, c, nodes);
-		fprintf(log, "Path:\n");
-		lib_trace_matrix(log, p, nodes);
+	}
 
-		serial_shortest(c, p, nodes);
-		fprintf(log, "After determining the shortest path.\nCost:\n");
-		lib_trace_matrix(log, c, nodes);
-		fprintf(log, "Path:\n");
-		lib_trace_matrix(log, p, nodes);
+	serial_shortest(c, p, nodes);
 
+	if (rank == ROOT) {
 		/* Dump final cost and path matrix to anaylze later. */
 		lib_write_cost_matrix(COST_FILE, c, nodes);
 		lib_write_cost_matrix(PATH_FILE, p, nodes);

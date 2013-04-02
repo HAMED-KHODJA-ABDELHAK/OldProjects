@@ -1,8 +1,11 @@
 /**
  * Reference implementation of floyd's algorithm serial implementation as baseline.
- * This program will only serially calculate the quicksort of the input file.
- * If you don't know the number of words in your input: cat input.txt | wc, second number is word count.
- * See mylib.h/.c for functions not in this file.
+ * This algorithm uses the simple algorithm of k rounds to get the answer.
+ * The final cost and path matrices are written to cost.txt and path.txt in this dir.
+ * This is done so you can use path_creator in demo run as it says at the top of its file to get the paths/costs of routes
+ * between nodes.
+ * For a pretty version, see the output.txt file that contains the matrix printed as a 2d array.
+ * For big matrices, it may be best to use a good text editor.
  *
  * Use command: bsub -I -q COMP428 -n1 mpirun -srun ./demo/serial <nodes> <mode>
  *
@@ -44,10 +47,9 @@ void serial_shortest(int **c, int **p, int size);
  * Main execution body.
  */
 int main(int argc, char **argv) {
-	int rank = 0, size = 0, nodes = 0, buf_size = 2000;
+	int rank = 0, size = 0, nodes = 0;
 	int *store_c = NULL, *store_p = NULL, **c = NULL, **p = NULL;
 	double start = 0.0;
-	char buf[buf_size];
 	FILE *log;
 
 	/* Standard init for MPI, start timer after init. */
@@ -59,7 +61,6 @@ int main(int argc, char **argv) {
 	/* Init rand, open output log and memset buffer for path. */
 	srand(time(NULL));
 	log = fopen(OUTPUT, "w");
-	memset(buf, '\0', buf_size*sizeof(char));
 
 	if (rank == ROOT) {
 		if (argc < 3)
