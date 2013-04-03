@@ -69,7 +69,7 @@ int lib_power(const int base, const unsigned int exp) {
  * If it has simple integer root, return it. Else return zero.
  */
 int lib_sqrt(const unsigned int val) {
-    int root = 1, root_sq = root * root;
+    unsigned int root = 1, root_sq = root * root;
 
     while (root_sq < val) {
         if ((val - root_sq) == 0)
