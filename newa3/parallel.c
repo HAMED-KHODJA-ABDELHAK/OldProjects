@@ -187,7 +187,7 @@ int main(int argc, char **argv) {
  * Find the shortest path, path is simply used to trace back the shortest path.
  * This is the simplest form of the algorithm. K rounds of using k at every point in the matrix.
  */
-void serial_shortest(int **c, int **p, int size, MPI_Comm *comm_row, MPI_Comm *comm_col) {
+void serial_shortest(int **c, int **p, int size) {
     int b_row = 0, b_col = 0, root = 0;
 
     for (int k = 0; k < size; ++k) {
@@ -200,7 +200,6 @@ void serial_shortest(int **c, int **p, int size, MPI_Comm *comm_row, MPI_Comm *c
                 }
             }
         }
-        if (lib_broadcast_round(2, 2, k, 1))
 
         MPI_Barrier(MPI_COMM_WORLD);
     }
