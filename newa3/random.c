@@ -78,6 +78,13 @@ int main(int argc, char **argv) {
         MPI_Group_free(&group);
     }
 
+    int mesg = 0;
+    if (rank == 2)
+        mesg = 10;
+    MPI_Bcast(&mesg, 1, MPI_INT, 0, comm[1]);
+
+    printf("I am %d, I have  %d.\n", rank, mesg);
+
     MPI_Group_free(&MPI_WORLD_GROUP);
     for (int i = 0; i < num_rows*2; ++i) {
         MPI_Comm_free(comm+i);
