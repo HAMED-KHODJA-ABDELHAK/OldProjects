@@ -85,8 +85,7 @@ int main(int argc, char **argv) {
         }
     }
     /* Calculate per node items. */
-    per_node = nodes * nodes;
-    per_node /= lib_sqrt(world);
+    per_node = (nodes*nodes)/world;
 
     /* Allocate cost matrices on heap, they are nodes*nodes large. */
     store_c = (int *)malloc(nodes * nodes * sizeof(int));
@@ -132,7 +131,7 @@ int main(int argc, char **argv) {
     /* Broadcast the values to all and start parallel execution. */
     MPI_Bcast(c, nodes*nodes, MPI_INT, ROOT, MPI_COMM_WORLD);
     serial_shortest(c, p, nodes);
-    MPI_Gather(c+((rank)*nodes), nodes, MPI_INT, c, per_node, MPI_INT, ROOT, MPI_COMM_WORLD);
+    MPI_Gather(c+((rank)*per_node), nodes, MPI_INT, c, per_node, MPI_INT, ROOT, MPI_COMM_WORLD);
 
     if (rank == ROOT) {
         /* Dump final cost and path matrix to anaylze later. */
@@ -168,5 +167,6 @@ void serial_shortest(int **c, int **p, int size) {
                 }
             }
         }
+        MPI_Barrier(MPI_COMM_WORLD);
     }
 }
