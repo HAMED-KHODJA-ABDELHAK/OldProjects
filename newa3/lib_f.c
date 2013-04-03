@@ -71,7 +71,7 @@ int lib_power(const int base, const unsigned int exp) {
 int lib_sqrt(const unsigned int val) {
     unsigned int root = 1, root_sq = root * root;
 
-    while (root_sq < val) {
+    while (root_sq <= val) {
         if ((val - root_sq) == 0)
             return root;
 
