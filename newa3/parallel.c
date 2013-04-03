@@ -45,10 +45,12 @@ void serial_shortest(int **c, int **p, int size);
  * Main execution body.
  */
 int main(int argc, char **argv) {
-    int rank = 0, world = 0, nodes = 0, per_node = 0;
+    /* Rank is my id in comm_world, world is num procs total, root_world is num of rows/cols required. */
+    int rank = 0, world = 0, root_world, nodes = 0, per_node = 0, row_id = 0, col_id = 0;
     int *store_c = NULL, *store_p = NULL, **c = NULL, **p = NULL;
     double start = 0.0;
     FILE *log;
+    MPI_Comm comm_row, comm_col; /* Communicators to bcast column or row. */
 
     /* Standard init for MPI, start timer after init. */
     MPI_Init(&argc, &argv);
@@ -65,8 +67,10 @@ int main(int argc, char **argv) {
             lib_error("MAIN: Error in usage, see notes in c file.");
     }
 
-    /* Get the number of nodes to use from command. */
+    /* Get the number of nodes, ints per_node and root_world which is the num of rows and cols needed in mesh. */
     nodes = atoi(*++argv);
+    per_node = (nodes*nodes)/world;
+    root_world = lib_sqrt(world);
 
     /* Due to 2D mesh division, check requirements for even operation. */
     if (rank == ROOT) {
@@ -77,15 +81,20 @@ int main(int argc, char **argv) {
         }
 
         /* Ensure we have an even sqrt(p) value. */
-        int root = lib_sqrt(world);
-        if (root == 0) {
+        if (root_world == 0) {
             lib_error("The number of processors must have even square root values.\n"
                     "For example, p = 16, root = 4.\n");
             return 1;
         }
     }
-    /* Calculate per node items. */
-    per_node = (nodes*nodes)/world;
+
+    /* Row and col id calculated by div and mod easily. */
+    row_id = rank/root_world;
+    col_id = rank%root_world;
+
+    /* Create the row and column communicators needed. */
+    MPI_Comm_split(MPI_COMM_WORLD, row_id, rank, &comm_row);
+    MPI_Comm_split(MPI_COMM_WORLD, col_id, rank, &comm_col);
 
     /* Allocate cost matrices on heap, they are nodes*nodes large. */
     store_c = (int *)malloc(nodes * nodes * sizeof(int));
@@ -130,8 +139,28 @@ int main(int argc, char **argv) {
 
     /* Broadcast the values to all and start parallel execution. */
     MPI_Bcast(c, nodes*nodes, MPI_INT, ROOT, MPI_COMM_WORLD);
-    serial_shortest(c, p, nodes);
-    MPI_Gather(c+(rank*per_node), per_node, MPI_INT, c, per_node, MPI_INT, ROOT, MPI_COMM_WORLD);
+
+    /* Start parallel algorithm. */
+    for (int k = 0; k < nodes; ++k) {
+        for (int i = 0; i < nodes; ++i) {
+            for (int j = 0; j < nodes; ++j) {
+                int new_dist = c[i][k] + c[k][j];
+                if (new_dist < c[i][j]) {
+                    c[i][j] = new_dist;
+                    p[i][j] = k;
+                }
+            }
+        }
+        int b_root = k%(nodes/root_world);
+        int row_rank = rank, col_rank = rank;
+        MPI_Bcast(&row_rank, 1, MPI_INT, b_root, comm_row);
+        MPI_Bcast(&col_rank, 1, MPI_INT, b_root, comm_row);
+
+        printf("I am %d of world %d, at k round %d I have:\nrow = %d, col = %d.\n", rank, world, k, row_rank, col_rank);
+
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+    /* End algorithm. */
 
     if (rank == ROOT) {
         /* Dump final cost and path matrix to anaylze later. */
@@ -142,6 +171,8 @@ int main(int argc, char **argv) {
     }
 
     /* Clean up the heap allocation. */
+    MPI_Comm_free(&comm_row);
+    MPI_Comm_free(&comm_col);
     free(c);
     free(p);
     free(store_c);
@@ -156,7 +187,9 @@ int main(int argc, char **argv) {
  * Find the shortest path, path is simply used to trace back the shortest path.
  * This is the simplest form of the algorithm. K rounds of using k at every point in the matrix.
  */
-void serial_shortest(int **c, int **p, int size) {
+void serial_shortest(int **c, int **p, int size, MPI_Comm *comm_row, MPI_Comm *comm_col) {
+    int b_row = 0, b_col = 0, root = 0;
+
     for (int k = 0; k < size; ++k) {
         for (int i = 0; i < size; ++i) {
             for (int j = 0; j < size; ++j) {
@@ -167,6 +200,8 @@ void serial_shortest(int **c, int **p, int size) {
                 }
             }
         }
+        if (lib_broadcast_round(2, 2, k, 1))
+
         MPI_Barrier(MPI_COMM_WORLD);
     }
 }
