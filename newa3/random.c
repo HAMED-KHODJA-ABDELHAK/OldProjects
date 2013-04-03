@@ -81,7 +81,10 @@ int main(int argc, char **argv) {
     int mesg = 0;
     if (rank == 2)
         mesg = 10;
-    MPI_Bcast(&mesg, 1, MPI_INT, 0, comm[1]);
+    int test = 0;
+    MPI_Comm_rank(comm[1], &test);
+    if (test != MPI_COMM_NULL)
+        MPI_Bcast(&mesg, 1, MPI_INT, 0, comm[1]);
 
     printf("I am %d, I have  %d.\n", rank, mesg);
 
