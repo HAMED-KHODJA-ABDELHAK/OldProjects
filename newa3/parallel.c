@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
     /* Broadcast the values to all and start parallel execution. */
     MPI_Bcast(c, nodes*nodes, MPI_INT, ROOT, MPI_COMM_WORLD);
     serial_shortest(c, p, nodes);
-    MPI_Gather(c+((rank)*per_node), nodes, MPI_INT, c, per_node, MPI_INT, ROOT, MPI_COMM_WORLD);
+    MPI_Gather(c+(rank*per_node), per_node, MPI_INT, c, per_node, MPI_INT, ROOT, MPI_COMM_WORLD);
 
     if (rank == ROOT) {
         /* Dump final cost and path matrix to anaylze later. */
