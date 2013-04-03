@@ -33,6 +33,17 @@ void lib_error(const char * const mesg);
 int lib_compare(const void *a, const void *b);
 
 /*
+* Integer power function, takes log(n) steps to compute.
+*/
+int lib_power(const int base, const unsigned int exp);
+
+/*
+ * Check if value has a simple square root. Val must be greater than zero.
+ * If it has simple integer root, return it. Else return zero.
+ */
+int lib_sqrt(const unsigned int val);
+
+/*
  * Initialise the cost matrix with correct values.
  */
 void lib_init_cost(int **c, int size);

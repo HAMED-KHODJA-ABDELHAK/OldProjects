@@ -45,7 +45,7 @@ void serial_shortest(int **c, int **p, int size);
  * Main execution body.
  */
 int main(int argc, char **argv) {
-	int rank = 0, size = 0, nodes = 0;
+	int rank = 0, world = 0, nodes = 0;
 	int *store_c = NULL, *store_p = NULL, **c = NULL, **p = NULL;
 	double start = 0.0;
 	FILE *log;
@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
 	MPI_Init(&argc, &argv);
 	start = MPI_Wtime();
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	MPI_Comm_size(MPI_COMM_WORLD, &world);
 
 	/* Init rand, open output log and memset buffer for path. */
 	srand(time(NULL));
@@ -67,6 +67,23 @@ int main(int argc, char **argv) {
 
 	/* Get the number of nodes to use from command. */
 	nodes = atoi(*++argv);
+
+	/* Due to 2D mesh division, check requirements for even operation. */
+	if (rank == ROOT) {
+	    /* Ensure we have even split amongst processors. */
+	    if ((nodes % world) != 0) {
+	    	lib_error("MAIN: Choose a number of nodes that is a multiple of the processors.");
+	        return 1;
+	    }
+
+	    /* Ensure we have an even sqrt(p) value. */
+	    int root = lib_sqrt(world);
+	    if (root == 0) {
+	        lib_error("The number of processors must have even square root values.\n"
+	        		"For example, p = 16, root = 4.\n");
+	        return 1;
+	    }
+	}
 
 	/* Allocate cost matrices on heap, they are nodes*nodes large. */
 	store_c = (int *)malloc(nodes * nodes * sizeof(int));
@@ -94,8 +111,8 @@ int main(int argc, char **argv) {
 	for (int i = 0; i < nodes; ++i)
 		p[i] = store_p+(i*nodes);
 
+	/* At this point, c and p are nxn matrices put on heap and freed later. Now root can initialise values. */
 	if (rank == ROOT) {
-		/* At this point, c and p are nxn matrices put on heap and freed later. Now initialise values. */
 		lib_init_cost(c, nodes);
 		lib_init_path(p, nodes);
 
@@ -109,6 +126,7 @@ int main(int argc, char **argv) {
 		lib_read_cost_matrix(INPUT, c, nodes);
 	}
 
+	/* Broadcast the values to all and start parallel execution. */
 	MPI_Bcast(c, nodes*nodes, MPI_INT, ROOT, MPI_COMM_WORLD);
 	serial_shortest(c, p, nodes);
 	MPI_Gather(c+((rank-1)*nodes), nodes, MPI_INT, c, nodes, MPI_INT, ROOT, MPI_COMM_WORLD);

@@ -46,6 +46,43 @@ int lib_compare (const void *a, const void *b) {
 }
 
 /*
+* Integer power function, takes log(n) steps to compute.
+*/
+int lib_power(const int base, const unsigned int exp) {
+    int temp;
+
+    if (exp == 0)
+        return 1;
+
+    // Odd power.
+    if (exp % 2) {
+        temp = lib_power(base, (exp-1)/2);
+        return temp * temp * base;
+    } else {
+        temp = lib_power(base, exp/2);
+        return temp * temp;
+    }
+}
+
+/*
+ * Check if value has a simple square root. Val must be greater than zero.
+ * If it has simple integer root, return it. Else return zero.
+ */
+int lib_sqrt(const unsigned int val) {
+    int root = 1, root_sq = root * root;
+
+    while (root_sq < val) {
+        if ((val - root_sq) == 0)
+            return root;
+
+        root += 1;
+        root_sq = root * root;
+    }
+
+    return 0;
+}
+
+/*
  * Function to init cost matrices, all values except diagonal to infinity, diagonal to 0.
  */
 void lib_init_cost(int **c, int size) {
