@@ -45,7 +45,7 @@ void serial_shortest(int **c, int **p, int size);
  * Main execution body.
  */
 int main(int argc, char **argv) {
-    int rank = 0, world = 0, nodes = 0;
+    int rank = 0, world = 0, nodes = 0, per_node = 0;
     int *store_c = NULL, *store_p = NULL, **c = NULL, **p = NULL;
     double start = 0.0;
     FILE *log;
@@ -84,6 +84,9 @@ int main(int argc, char **argv) {
             return 1;
         }
     }
+    /* Calculate per node items. */
+    per_node = nodes * nodes;
+    per_node /= lib_sqrt(world);
 
     /* Allocate cost matrices on heap, they are nodes*nodes large. */
     store_c = (int *)malloc(nodes * nodes * sizeof(int));
@@ -129,7 +132,7 @@ int main(int argc, char **argv) {
     /* Broadcast the values to all and start parallel execution. */
     MPI_Bcast(c, nodes*nodes, MPI_INT, ROOT, MPI_COMM_WORLD);
     serial_shortest(c, p, nodes);
-    MPI_Gather(store_c+((rank-1)*nodes), nodes, MPI_INT, c, nodes, MPI_INT, ROOT, MPI_COMM_WORLD);
+    MPI_Gather(c+((rank)*nodes), nodes, MPI_INT, c, per_node, MPI_INT, ROOT, MPI_COMM_WORLD);
 
     if (rank == ROOT) {
         /* Dump final cost and path matrix to anaylze later. */
