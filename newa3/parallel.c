@@ -45,109 +45,109 @@ void serial_shortest(int **c, int **p, int size);
  * Main execution body.
  */
 int main(int argc, char **argv) {
-	int rank = 0, world = 0, nodes = 0;
-	int *store_c = NULL, *store_p = NULL, **c = NULL, **p = NULL;
-	double start = 0.0;
-	FILE *log;
+    int rank = 0, world = 0, nodes = 0;
+    int *store_c = NULL, *store_p = NULL, **c = NULL, **p = NULL;
+    double start = 0.0;
+    FILE *log;
 
-	/* Standard init for MPI, start timer after init. */
-	MPI_Init(&argc, &argv);
-	start = MPI_Wtime();
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	MPI_Comm_size(MPI_COMM_WORLD, &world);
+    /* Standard init for MPI, start timer after init. */
+    MPI_Init(&argc, &argv);
+    start = MPI_Wtime();
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &world);
 
-	/* Init rand, open output log and memset buffer for path. */
-	srand(time(NULL));
-	log = fopen(OUTPUT, "w");
+    /* Init rand, open output log and memset buffer for path. */
+    srand(time(NULL));
+    log = fopen(OUTPUT, "w");
 
-	if (rank == ROOT) {
-		if (argc < 3)
-			lib_error("MAIN: Error in usage, see notes in c file.");
-	}
+    if (rank == ROOT) {
+        if (argc < 3)
+            lib_error("MAIN: Error in usage, see notes in c file.");
+    }
 
-	/* Get the number of nodes to use from command. */
-	nodes = atoi(*++argv);
+    /* Get the number of nodes to use from command. */
+    nodes = atoi(*++argv);
 
-	/* Due to 2D mesh division, check requirements for even operation. */
-	if (rank == ROOT) {
-	    /* Ensure we have even split amongst processors. */
-	    if ((nodes % world) != 0) {
-	    	lib_error("MAIN: Choose a number of nodes that is a multiple of the processors.");
-	        return 1;
-	    }
+    /* Due to 2D mesh division, check requirements for even operation. */
+    if (rank == ROOT) {
+        /* Ensure we have even split amongst processors. */
+        if ((nodes % world) != 0) {
+            lib_error("MAIN: Choose a number of nodes that is a multiple of the processors.");
+            return 1;
+        }
 
-	    /* Ensure we have an even sqrt(p) value. */
-	    int root = lib_sqrt(world);
-	    if (root == 0) {
-	        lib_error("The number of processors must have even square root values.\n"
-	        		"For example, p = 16, root = 4.\n");
-	        return 1;
-	    }
-	}
+        /* Ensure we have an even sqrt(p) value. */
+        int root = lib_sqrt(world);
+        if (root == 0) {
+            lib_error("The number of processors must have even square root values.\n"
+                    "For example, p = 16, root = 4.\n");
+            return 1;
+        }
+    }
 
-	/* Allocate cost matrices on heap, they are nodes*nodes large. */
-	store_c = (int *)malloc(nodes * nodes * sizeof(int));
-	if (store_c == NULL)
-		lib_error("MAIN: Can't allocate storage for cost on heap.");
+    /* Allocate cost matrices on heap, they are nodes*nodes large. */
+    store_c = (int *)malloc(nodes * nodes * sizeof(int));
+    if (store_c == NULL)
+        lib_error("MAIN: Can't allocate storage for cost on heap.");
 
-	/* Take contiguous 1D array and make c be a 2d pointer into it. */
-	c = (int **)malloc(nodes * sizeof(int*));
-	if (c == NULL)
-		lib_error("MAIN: Can't allocate cost pointers array on heap.");
+    /* Take contiguous 1D array and make c be a 2d pointer into it. */
+    c = (int **)malloc(nodes * sizeof(int*));
+    if (c == NULL)
+        lib_error("MAIN: Can't allocate cost pointers array on heap.");
 
-	for (int i = 0; i < nodes; ++i)
-		c[i] = store_c+(i*nodes);
+    for (int i = 0; i < nodes; ++i)
+        c[i] = store_c+(i*nodes);
 
-	/* Allocate path same as cost above. */
-	store_p = (int *)malloc(nodes * nodes * sizeof(int));
-	if (store_p == NULL)
-		lib_error("MAIN: Can't allocate storage for path on heap.");
+    /* Allocate path same as cost above. */
+    store_p = (int *)malloc(nodes * nodes * sizeof(int));
+    if (store_p == NULL)
+        lib_error("MAIN: Can't allocate storage for path on heap.");
 
-	/* Take contiguous 1D array and make p be a 2d pointer into it. */
-	p = (int **)malloc(nodes * sizeof(int*));
-	if (p == NULL)
-		lib_error("MAIN: Can't allocate path pointers array on heap.");
+    /* Take contiguous 1D array and make p be a 2d pointer into it. */
+    p = (int **)malloc(nodes * sizeof(int*));
+    if (p == NULL)
+        lib_error("MAIN: Can't allocate path pointers array on heap.");
 
-	for (int i = 0; i < nodes; ++i)
-		p[i] = store_p+(i*nodes);
+    for (int i = 0; i < nodes; ++i)
+        p[i] = store_p+(i*nodes);
 
-	/* At this point, c and p are nxn matrices put on heap and freed later. Now root can initialise values. */
-	if (rank == ROOT) {
-		lib_init_cost(c, nodes);
-		lib_init_path(p, nodes);
+    /* At this point, c and p are nxn matrices put on heap and freed later. Now root can initialise values. */
+    if (rank == ROOT) {
+        lib_init_cost(c, nodes);
+        lib_init_path(p, nodes);
 
-		/* If requested, generate new input file. */
-		if (strcmp(*++argv, GENERATE_FLAG) == 0) {
-			lib_generate_graph(c, nodes);
-			lib_write_cost_matrix(INPUT, c, nodes);
-		}
+        /* If requested, generate new input file. */
+        if (strcmp(*++argv, GENERATE_FLAG) == 0) {
+            lib_generate_graph(c, nodes);
+            lib_write_cost_matrix(INPUT, c, nodes);
+        }
 
-		/* Read back input from file into array on heap. */
-		lib_read_cost_matrix(INPUT, c, nodes);
-	}
+        /* Read back input from file into array on heap. */
+        lib_read_cost_matrix(INPUT, c, nodes);
+    }
 
-	/* Broadcast the values to all and start parallel execution. */
-	MPI_Bcast(c, nodes*nodes, MPI_INT, ROOT, MPI_COMM_WORLD);
-	serial_shortest(c, p, nodes);
-	MPI_Gather(c+((rank-1)*nodes), nodes, MPI_INT, c, nodes, MPI_INT, ROOT, MPI_COMM_WORLD);
+    /* Broadcast the values to all and start parallel execution. */
+    MPI_Bcast(c, nodes*nodes, MPI_INT, ROOT, MPI_COMM_WORLD);
+    serial_shortest(c, p, nodes);
+    MPI_Gather(store_c+((rank-1)*nodes), nodes, MPI_INT, c, nodes, MPI_INT, ROOT, MPI_COMM_WORLD);
 
-	if (rank == ROOT) {
-		/* Dump final cost and path matrix to anaylze later. */
-		lib_write_cost_matrix(COST_FILE, c, nodes);
-		lib_write_cost_matrix(PATH_FILE, p, nodes);
+    if (rank == ROOT) {
+        /* Dump final cost and path matrix to anaylze later. */
+        lib_write_cost_matrix(COST_FILE, c, nodes);
+        lib_write_cost_matrix(PATH_FILE, p, nodes);
 
-		fprintf(log, "Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
-	}
+        fprintf(log, "Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
+    }
 
-	/* Clean up the heap allocation. */
-	free(c);
-	free(p);
-	free(store_c);
-	free(store_p);
-	fclose(log);
-	MPI_Finalize();
+    /* Clean up the heap allocation. */
+    free(c);
+    free(p);
+    free(store_c);
+    free(store_p);
+    fclose(log);
+    MPI_Finalize();
 
-	return 0;
+    return 0;
 }
 
 /*
@@ -155,15 +155,15 @@ int main(int argc, char **argv) {
  * This is the simplest form of the algorithm. K rounds of using k at every point in the matrix.
  */
 void serial_shortest(int **c, int **p, int size) {
-	for (int k = 0; k < size; ++k) {
-		for (int i = 0; i < size; ++i) {
-			for (int j = 0; j < size; ++j) {
-				int new_dist = c[i][k] + c[k][j];
-				if (new_dist < c[i][j]) {
-					c[i][j] = new_dist;
-					p[i][j] = k;
-				}
-			}
-		}
-	}
+    for (int k = 0; k < size; ++k) {
+        for (int i = 0; i < size; ++i) {
+            for (int j = 0; j < size; ++j) {
+                int new_dist = c[i][k] + c[k][j];
+                if (new_dist < c[i][j]) {
+                    c[i][j] = new_dist;
+                    p[i][j] = k;
+                }
+            }
+        }
+    }
 }
