@@ -59,13 +59,28 @@ int main(int argc, char **argv) {
     int num_rows = lib_sqrt(world), list[num_rows];
     /* Row comm at the front, col comm at the back. */
     MPI_Comm comm[num_rows*2];
-    MPI_Group group;
+    MPI_Group MPI_WORLD_GROUP, group;
+    MPI_Comm_group(MPI_COMM_WORLD, &MPI_WORLD_GROUP);
 
+    /* Row comms. */
     for (int i = 0; i < num_rows; ++i) {
         lib_get_group_list(num_rows, i, 1, list);
-        for (int i = 0; i < num_rows; ++i)
-            printf("%d ", list[i]);
-        printf("End round %d\n", i);
+        MPI_Group_incl(MPI_WORLD_GROUP, num_rows, list, &group);
+        MPI_Comm_create(MPI_COMM_WORLD, group, &comm[i]);
+        MPI_Group_free(&group);
+    }
+
+    /* Column comms. */
+    for (int i = 0; i < num_rows; ++i) {
+        lib_get_group_list(num_rows, i, 0, list);
+        MPI_Group_incl(MPI_WORLD_GROUP, num_rows, list, &group);
+        MPI_Comm_create(MPI_COMM_WORLD, group, &comm[num_rows+i]);
+        MPI_Group_free(&group);
+    }
+
+    MPI_Group_free(&MPI_WORLD_GROUP);
+    for (int i = 0; i < num_rows*2; ++i) {
+        MPI_Comm_free(comm+i);
     }
 
     MPI_Finalize();
