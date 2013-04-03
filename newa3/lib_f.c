@@ -86,72 +86,87 @@ int lib_sqrt(const unsigned int val) {
  * Function to init cost matrices, all values except diagonal to infinity, diagonal to 0.
  */
 void lib_init_cost(int **c, int size) {
-	for (int i = 0; i < size; ++i) {
-		for (int j = 0; j < size; ++j) {
-			if (j == i) {
-				c[i][j] = 0;
-			} else {
-				c[i][j] = INF;
-			}
-		}
-	}
+    for (int i = 0; i < size; ++i) {
+        for (int j = 0; j < size; ++j) {
+            if (j == i) {
+                c[i][j] = 0;
+            } else {
+                c[i][j] = INF;
+            }
+        }
+    }
 }
 
 /*
  * Function to init path matrices, all values to infinity.
  */
 void lib_init_path(int **p, int size) {
-	for (int i = 0; i < size; ++i) {
-		for (int j = 0; j < size; ++j) {
-			p[i][j] = INF;
-		}
-	}
+    for (int i = 0; i < size; ++i) {
+        for (int j = 0; j < size; ++j) {
+            p[i][j] = INF;
+        }
+    }
 }
 
 /*
  * Generate an edge cost between two nodes given a probability of connection prob.
  */
 int lib_edge_cost(double prob) {
-	double p = (double) rand()/RAND_MAX;
+    double p = (double) rand()/RAND_MAX;
 
-	if (p <= prob)
-		return (rand() % MAX_COST) + 1;
-	else
-		return INF;
+    if (p <= prob)
+        return (rand() % MAX_COST) + 1;
+    else
+        return INF;
 }
 
 /*
  * Generate a graph of the requested size randomly.
  */
 void lib_generate_graph(int **c, int size) {
-	for (int i = 0; i < size; ++i) {
-		for (int j = 0; j < size; ++j) {
-			if (j == i) {
-				c[i][j] = 0;
-			} else {
-				c[i][j] = lib_edge_cost(0.5);
-			}
-		}
-	}
+    for (int i = 0; i < size; ++i) {
+        for (int j = 0; j < size; ++j) {
+            if (j == i) {
+                c[i][j] = 0;
+            } else {
+                c[i][j] = lib_edge_cost(0.5);
+            }
+        }
+    }
 }
+
+/*
+ * Simple helper function, returns a group of integers that correspond to the ids
+ * that should be included in row or column group for 2d mesh.
+ */
+void lib_get_group_list(int per_row, int round, int is_row, int *list) {
+    for (int i = 0; i < per_row; ++i) {
+        if (is_row) {
+            list[i] = round*per_row + i;
+        } else {
+            list[i] = i*per_row + round;
+        }
+    }
+}
+
 
 /*
  * Dump a matrix to file in a nice 2D array format. Differs from below format.
  */
 void lib_trace_matrix(FILE *f, int **a, int size) {
-	for (int i = 0; i < size; ++i) {
-		for (int j = 0; j < size; ++j) {
-			if (j == 0)
-				fprintf(f, "The row %5d: ", i);
+    for (int i = 0; i < size; ++i) {
+        for (int j = 0; j < size; ++j) {
+            if (j == 0)
+                fprintf(f, "The row %5d: ", i);
 
-			fprintf(f, "%5d ", a[i][j]);
+            fprintf(f, "%5d ", a[i][j]);
 
-			if (j == size-1)
-				fprintf(f, "\n");
-		}
-	}
+            if (j == size-1)
+                fprintf(f, "\n");
+        }
+    }
 
-	fprintf(f, "\n\n");
+    fprintf(f, "\n\n");
 }
 
 /*
@@ -163,22 +178,22 @@ void lib_trace_matrix(FILE *f, int **a, int size) {
  * .....
  */
 void lib_write_cost_matrix(const char *filename, int **c, const int size) {
-	FILE *f;
+    FILE *f;
 
-	f = fopen(filename, "w");
-	if (f == NULL)
-		lib_error("WRITE_MATRIX: Failed to open file.");
+    f = fopen(filename, "w");
+    if (f == NULL)
+        lib_error("WRITE_MATRIX: Failed to open file.");
 
-	fprintf(f, "%d\n", size);
+    fprintf(f, "%d\n", size);
 
-	for (int i = 0; i < size; ++i) {
-		for (int j = 0; j < size; ++j) {
-			if (c[i][j] != INF && i != j)
-				fprintf(f, "%d %d %d\n", i, j, c[i][j]);
-		}
-	}
+    for (int i = 0; i < size; ++i) {
+        for (int j = 0; j < size; ++j) {
+            if (c[i][j] != INF && i != j)
+                fprintf(f, "%d %d %d\n", i, j, c[i][j]);
+        }
+    }
 
-	fclose(f);
+    fclose(f);
 }
 
 /*
@@ -190,24 +205,24 @@ void lib_write_cost_matrix(const char *filename, int **c, const int size) {
  * .....
  */
 void lib_read_cost_matrix(const char *filename, int **c, const int size) {
-	int i = 0, j = 0, w = 0;
-	FILE *f;
+    int i = 0, j = 0, w = 0;
+    FILE *f;
 
-	f = fopen(filename, "r");
-	if (f == NULL)
-		lib_error("READ_MATRIX: Failed to open file.");
+    f = fopen(filename, "r");
+    if (f == NULL)
+        lib_error("READ_MATRIX: Failed to open file.");
 
-	fscanf(f, "%d", &i);
-	if (size != i)
-		lib_error("READ_MATRIX: Node size of matrix and file do not agree.");
+    fscanf(f, "%d", &i);
+    if (size != i)
+        lib_error("READ_MATRIX: Node size of matrix and file do not agree.");
 
-	while (feof(f) == 0 && ferror(f) == 0) {
-		fscanf(f, "%d %d %d", &i, &j, &w);
-		if (i < 0 || j < 0 || i > size-1 || j > size-1)
-			continue;
-		c[i][j] = w;
-	}
+    while (feof(f) == 0 && ferror(f) == 0) {
+        fscanf(f, "%d %d %d", &i, &j, &w);
+        if (i < 0 || j < 0 || i > size-1 || j > size-1)
+            continue;
+        c[i][j] = w;
+    }
 
-	fclose(f);
+    fclose(f);
 }
 
