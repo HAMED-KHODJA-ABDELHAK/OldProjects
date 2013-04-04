@@ -160,7 +160,7 @@ int main(int argc, char **argv) {
         MPI_Bcast(&row_rank, 1, MPI_INT, b_root, comm_row);
         MPI_Bcast(&col_rank, 1, MPI_INT, b_root, comm_col);
 
-        printf("I am %d of world %d, at k round %d I have:\nrow = %d, col = %d.\n", rank, world, k, row_rank, col_rank);
+        printf("I am %d of world %d, at k round %d I have: row = %d, col = %d.\n", rank, world, k, row_rank, col_rank);
 
         MPI_Barrier(MPI_COMM_WORLD);
     }
