@@ -13,7 +13,7 @@
 #define INF					10000
 /* Root ID */
 #define ROOT                0
-#define INPUT				"input3.txt"
+#define INPUT				"input.txt"
 #define OUTPUT				"output.txt"
 #define COST_FILE			"cost.txt"
 #define PATH_FILE			"path.txt"
