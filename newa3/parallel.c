@@ -140,6 +140,7 @@ int main(int argc, char **argv) {
     /* Broadcast the values to all and start parallel execution. */
     MPI_Bcast(c, nodes*nodes, MPI_INT, ROOT, MPI_COMM_WORLD);
 
+    int nodes_per_block = nodes/root_world;
     /* Start parallel algorithm. */
     for (int k = 0; k < nodes; ++k) {
         for (int i = 0; i < nodes; ++i) {
@@ -151,10 +152,10 @@ int main(int argc, char **argv) {
                 }
             }
         }
-        int b_root = k%(nodes/root_world);
         int row_rank = rank, col_rank = rank;
+        int b_root = k/nodes_per_block;
         MPI_Bcast(&row_rank, 1, MPI_INT, b_root, comm_row);
-        MPI_Bcast(&col_rank, 1, MPI_INT, b_root, comm_row);
+        MPI_Bcast(&col_rank, 1, MPI_INT, b_root, comm_col);
 
         printf("I am %d of world %d, at k round %d I have:\nrow = %d, col = %d.\n", rank, world, k, row_rank, col_rank);
 
@@ -167,7 +168,7 @@ int main(int argc, char **argv) {
         lib_write_cost_matrix(COST_FILE, c, nodes);
         lib_write_cost_matrix(PATH_FILE, p, nodes);
 
-        fprintf(log, "Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
+        fprintf(stdout, "Time elapsed from MPI_Init to MPI_Finalize is %.10f seconds.\n", MPI_Wtime() - start);
     }
 
     /* Clean up the heap allocation. */

@@ -136,21 +136,6 @@ void lib_generate_graph(int **c, int size) {
 }
 
 /*
- * Simple helper function, returns a group of integers that correspond to the ids
- * that should be included in row or column group for 2d mesh.
- */
-void lib_get_group_list(int per_row, int round, int is_row, int *list) {
-    for (int i = 0; i < per_row; ++i) {
-        if (is_row) {
-            list[i] = round*per_row + i;
-        } else {
-            list[i] = i*per_row + round;
-        }
-    }
-}
-
-
-/*
  * Dump a matrix to file in a nice 2D array format. Differs from below format.
  */
 void lib_trace_matrix(FILE *f, int **a, int size) {
