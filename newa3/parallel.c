@@ -29,7 +29,6 @@
 
 /******************* Type Definitions *********************/
 
-void serial_shortest(int **c, int **p, int size);
 
 /**************** Static Data Definitions *****************/
 
@@ -135,6 +134,10 @@ int main(int argc, char **argv) {
 
         /* Read back input from file into array on heap. */
         lib_read_cost_matrix(INPUT, c, nodes);
+        fprintf(log, "Initial arrays cost and path.\nCost:\n");
+        lib_trace_matrix(log, c, nodes);
+        fprintf(log, "Path:\n");
+        lib_trace_matrix(log, p, nodes);
     }
 
     /* Broadcast the values to all and start parallel execution. */
@@ -164,6 +167,12 @@ int main(int argc, char **argv) {
     /* End algorithm. */
 
     if (rank == ROOT) {
+        /* Log final. */
+        fprintf(log, "After determining the shortest path.\nCost:\n");
+        lib_trace_matrix(log, c, nodes);
+        fprintf(log, "Path:\n");
+        lib_trace_matrix(log, p, nodes);
+
         /* Dump final cost and path matrix to anaylze later. */
         lib_write_cost_matrix(COST_FILE, c, nodes);
         lib_write_cost_matrix(PATH_FILE, p, nodes);
@@ -182,26 +191,4 @@ int main(int argc, char **argv) {
     MPI_Finalize();
 
     return 0;
-}
-
-/*
- * Find the shortest path, path is simply used to trace back the shortest path.
- * This is the simplest form of the algorithm. K rounds of using k at every point in the matrix.
- */
-void serial_shortest(int **c, int **p, int size) {
-    int b_row = 0, b_col = 0, root = 0;
-
-    for (int k = 0; k < size; ++k) {
-        for (int i = 0; i < size; ++i) {
-            for (int j = 0; j < size; ++j) {
-                int new_dist = c[i][k] + c[k][j];
-                if (new_dist < c[i][j]) {
-                    c[i][j] = new_dist;
-                    p[i][j] = k;
-                }
-            }
-        }
-
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
 }
