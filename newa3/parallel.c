@@ -45,8 +45,8 @@
  */
 int main(int argc, char **argv) {
     /* Rank is my id in comm_world, world is num procs total, root_world is num of rows/cols required. */
-    int rank = 0, world = 0, root_world, nodes = 0, per_node = 0, row_id = 0, col_id = 0;
-    int *store_c = NULL, *store_p = NULL, **c = NULL, **p = NULL;
+    int rank = 0, world = 0, root_world, nodes = 0, ele_per_block = 0, row_id = 0, col_id = 0;
+    int *store_c = NULL, *store_p = NULL, **c = NULL, **p = NULL, *send_buf = NULL;
     double start = 0.0;
     FILE *log;
     MPI_Comm comm_row, comm_col; /* Communicators to bcast column or row. */
@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
 
     /* Get the number of nodes, ints per_node and root_world which is the num of rows and cols needed in mesh. */
     nodes = atoi(*++argv);
-    per_node = (nodes*nodes)/world;
+    ele_per_block = (nodes*nodes)/world;
     root_world = lib_sqrt(world);
 
     /* Due to 2D mesh division, check requirements for even operation. */
@@ -121,6 +121,11 @@ int main(int argc, char **argv) {
     for (int i = 0; i < nodes; ++i)
         p[i] = store_p+(i*nodes);
 
+    /* Allocate send buffer for bcast. */
+    send_buf = (int *)malloc((ele_per_block+2) * sizeof(int));
+    if (send_buf == NULL)
+        lib_error("MAIN: Can't allocate send buffer for bcast.");
+
     /* At this point, c and p are nxn matrices put on heap and freed later. Now root can initialise values. */
     if (rank == ROOT) {
         lib_init_cost(c, nodes);
@@ -144,10 +149,14 @@ int main(int argc, char **argv) {
     MPI_Bcast(c, nodes*nodes, MPI_INT, ROOT, MPI_COMM_WORLD);
 
     int nodes_per_block = nodes/root_world;
+    int send_row_id = 0, send_col_id = 0, cnt = 0, b_root = 0;
     /* Start parallel algorithm. */
     for (int k = 0; k < nodes; ++k) {
-        for (int i = 0; i < nodes; ++i) {
-            for (int j = 0; j < nodes; ++j) {
+        const int i_begin = row_id*nodes_per_block, j_begin = col_id*nodes_per_block;
+        const int i_end = i_begin+nodes_per_block, j_end = j_begin+nodes_per_block;
+
+        for (int i = i_begin; i < i_end; ++i) {
+            for (int j = j_begin; j < j_end; ++j) {
                 int new_dist = c[i][k] + c[k][j];
                 if (new_dist < c[i][j]) {
                     c[i][j] = new_dist;
@@ -155,12 +164,60 @@ int main(int argc, char **argv) {
                 }
             }
         }
-        int row_rank = rank, col_rank = rank;
-        int b_root = k/nodes_per_block;
-        MPI_Bcast(&row_rank, 1, MPI_INT, b_root, comm_row);
-        MPI_Bcast(&col_rank, 1, MPI_INT, b_root, comm_col);
 
-        printf("I am %d of world %d, at k round %d I have: row = %d, col = %d.\n", rank, world, k, row_rank, col_rank);
+        /* This is the root node of the broadcast. */
+        b_root = k/nodes_per_block;
+
+        /* If I am row root, copy elements into array and bcast. Include source row,col id at begin. */
+        if (row_id == b_root) {
+            cnt = 0;
+            send_buf[cnt++] = row_id;
+            send_buf[cnt++] = col_id;
+            for (int i = i_begin; i < i_end; ++i) {
+                for (int j = j_begin; j < j_end; ++j) {
+                    send_buf[cnt++] = c[i][j];
+                }
+            }
+        }
+
+        MPI_Bcast(send_buf, ele_per_block+2, MPI_INT, b_root, comm_row);
+
+        /* I have new values from some source, get id, make new i_begin and overwrite. */
+        cnt = 0;
+        send_row_id = send_buf[cnt++];
+        send_col_id = send_buf[cnt++];
+        int si_begin = send_row_id*nodes_per_block, sj_begin = send_col_id*nodes_per_block;
+        int si_end = si_begin+nodes_per_block, sj_end = sj_begin+nodes_per_block;
+        for (int i = si_begin; i < si_end; ++i) {
+            for (int j = sj_begin; j < sj_end; ++j) {
+                c[i][j] = send_buf[cnt++];
+            }
+        }
+
+        /* If I am col root, repeat above steps. */
+        if (col_id == b_root) {
+            cnt = 0;
+            send_buf[cnt++] = row_id;
+            send_buf[cnt++] = col_id;
+            for (int i = i_begin; i < i_end; ++i) {
+                for (int j = j_begin; j < j_end; ++j) {
+                    send_buf[cnt++] = c[i][j];
+                }
+            }
+        }
+
+        MPI_Bcast(send_buf, ele_per_block+2, MPI_INT, b_root, comm_row);
+
+        cnt = 0;
+        send_row_id = send_buf[cnt++];
+        send_col_id = send_buf[cnt++];
+        si_begin = send_row_id*nodes_per_block, sj_begin = send_col_id*nodes_per_block;
+        si_end = si_begin+nodes_per_block, sj_end = sj_begin+nodes_per_block;
+        for (int i = si_begin; i < si_end; ++i) {
+            for (int j = sj_begin; j < sj_end; ++j) {
+                c[i][j] = send_buf[cnt++];
+            }
+        }
 
         MPI_Barrier(MPI_COMM_WORLD);
     }
