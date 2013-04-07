@@ -196,6 +196,7 @@ int main(int argc, char **argv) {
 
         /* If I am col root, repeat above steps. */
         if (col_id == b_root) {
+        	printf("Send row, send col, row, col. %d %d %d %d.", send_buf[0], send_buf[1], row_id, col_id);
             cnt = 0;
             send_buf[cnt++] = row_id;
             send_buf[cnt++] = col_id;
@@ -206,7 +207,7 @@ int main(int argc, char **argv) {
             }
         }
 
-        MPI_Bcast(send_buf, ele_per_block+2, MPI_INT, b_root, comm_row);
+        MPI_Bcast(send_buf, ele_per_block+2, MPI_INT, b_root, comm_col);
 
         cnt = 0;
         send_row_id = send_buf[cnt++];
