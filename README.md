@@ -1,10 +1,13 @@
-cirrus
-======
+Overview
+========
 
-These programs were designed to run on a cluster, I believe you can run them locally by using openMPI. These come with no warranty, use as is.
+This is a repo of interesting code I've worked on over the years.
 
-Both A1 and A2 work perfectly.
-I started A3 a little late so I submitted not perfectly running code.
+It is mainly experiments with programming algorithms, interesting tech or just stuff I might reuse. People are free to take what they will
+not all code is up to my latest standards as I've evolved as I wrote it though most has some interesting stuff.
 
-Some people may find the MPI code interesting, shows how to use Makefiles to compile C and use Cunit as unit testing. I personally liked this course quite a bit.
+mpi: Contains some cluster programming I did during university. See readme inside.
+
+data_structs: Contains implementations of some common datastructs including trees, heaps and graphs in Java.
+
 
