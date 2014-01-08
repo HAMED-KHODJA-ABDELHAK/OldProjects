@@ -16,3 +16,5 @@ a2: Implements a hypercube quicksort algorithm, where we speed up slightly over 
 a3: An attempted implementation of floyd's all pairs, didn't finish it though.
     The serial version works, but the cluster one doesn't and needs work.
     I started a little too late on this.
+
+Other folders are largely irrelevant, they were just scratch code for the main work.
