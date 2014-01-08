@@ -10,4 +10,4 @@ mpi: Contains some cluster programming I did during university. See readme insid
 
 data_structs: Contains implementations of some common datastructs including trees, heaps and graphs in Java.
 
-
+ncurses: Some experiments with making a curses driven gui, thought I might use this for mpi but didn't need it.
