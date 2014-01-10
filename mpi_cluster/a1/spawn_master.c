@@ -55,6 +55,7 @@ int main(int argc, char **argv) {
 	/* Process args. */
 	if (argc < 2) {
 		printf("You MUST tell the master how many slaves to spawn. Try again.\n");
+		MPI_Finalize();
 		exit(1);
 	}
 	tasks = atoi(*++argv);
