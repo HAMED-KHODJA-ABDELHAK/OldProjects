@@ -10,10 +10,11 @@ SRC_DIR=.
 EXE_DIR=./demo
 
 # Commands and Flags, cflags + f_debug are for gcc flags. Include and LD_Flags are where to find headers and libraries.
-CC:=mpiCC
+CC:=mpicc
+CXX:=mpiCC
 RM:=@rm -rf
 CFLAGS:=-std=c99
-CXXFLAGS:=#-Weffc++
+CXXFLAGS:=
 F_DEBUG:=-ggdb -Wall -Wextra -Winline -pedantic
 INCLUDE:=-I./cunit/include 
 LD_PATH:=-L./cunit/lib
@@ -23,7 +24,7 @@ AR:=ar -rf
 RANLIB:=ranlib
 LIB_NAME:=shared.a #Name only.
 LIB_ARC:=$(EXE_DIR)/$(LIB_NAME) #Final directory + name.
-LIB_OBJS:= lib_floyd.o # Objects required.
+LIB_OBJS:=lib_f.o # Objects required.
 LIBS:=$(LIB_ARC) -lcunit 
 
 # Generic files to clean.
@@ -31,10 +32,11 @@ FILES_TO_CLEAN:=*.o *.a *.out *.exe *~ temp.* *.gcov *.gcda *.gcno
 
 # Target executables to build
 EXES = \
-	$(EXE_DIR)/serial_floyd \
-	$(EXE_DIR)/parallel_floyd \
-	$(EXE_DIR)/pipeline_floyd \
-	$(EXE_DIR)/test_floyd
+	$(EXE_DIR)/serial \
+	$(EXE_DIR)/test_lib \
+	$(EXE_DIR)/random \
+	$(EXE_DIR)/parallel \
+	$(EXE_DIR)/path_creator \
 
 # Custom rules, define how to link and compile respectively.
 $(EXE_DIR)/%: %.o 
@@ -44,10 +46,14 @@ $(EXE_DIR)/%: %.o
 	$(CC) $(INCLUDE) $(CFLAGS) $(F_DEBUG) -o $@ -c $< 
 
 %.o: $(SRC_DIR)/%.cpp
-	$(CC) $(INCLUDE) $(CXXFLAGS) $(F_DEBUG) -o $@ -c $< 
+	$(CXX) $(INCLUDE) $(CXXFLAGS) $(F_DEBUG) -o $@ -c $< 
 
 # Rules to build and clean
 all: $(LIB_ARC) $(EXES)
+	$(RM) path_creator.o
+
+$(EXE_DIR)/path_creator : path_creator.o
+	$(CXX) -o $@ $(LD_PATH) $< 
 
 $(LIB_ARC): $(LIB_OBJS)
 	$(AR) $@ $^ 
@@ -55,4 +61,4 @@ $(LIB_ARC): $(LIB_OBJS)
 	$(RM) $^	
 
 clean:
-	$(RM) $(EXES) $(LIB_ARC) core.* output.txt* log* $(FILES_TO_CLEAN)          
+	$(RM) $(EXES) $(LIB_ARC) core.* output.txt* log* cost.txt path.txt $(FILES_TO_CLEAN)          
