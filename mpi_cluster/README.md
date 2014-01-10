@@ -5,7 +5,7 @@ These programs were designed to run on a cluster, I believe you can run them loc
 
 Some people may find the MPI code interesting, shows how to use Makefiles to compile C and use Cunit as unit testing. I personally liked this course quite a bit.
 
-In order to setup Ubuntu, see this: http://jetcracker.wordpress.com/2012/03/01/how-to-install-mpi-in-ubuntu/
+In order to setup Ubuntu, use this command: sudo apt-get install build-essentiali openmpi-bin openmpi-common openmpi-dbg openmpi-dev openmpi-doc
 Use mpirun instead of bsub to run these on a local machine without cluster.
 
 a1: Implements a dart algorithm that uses a brute force approach to calculate pi.
