@@ -321,5 +321,5 @@ int lib_median_of_medians(int *vals, int left, int right) {
 
      /* Quick sort the small list of medians, then pick the middle median. */
      qsort(vals, num_medians, sizeof(int), lib_compare);
-     return (num_medians/2) + 1;
+     return num_medians/2;
 }
