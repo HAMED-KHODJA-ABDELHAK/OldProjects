@@ -164,9 +164,10 @@ public class HeapArray {
 		h.insert(10);
 		h.insert(90);
 
-		while (true) {
+		boolean run = true;
+		while (run) {
 			System.out.print("Select from one of the following actions:\n");
-			System.out.print("(d)isplay, (i)nsert, (r)emove, (f)ind\n");
+			System.out.print("(d)isplay, (i)nsert, (r)emove, (f)ind or (q)uit.\n");
 
 			char choice = s.next().toLowerCase().charAt(0);
 
@@ -197,6 +198,11 @@ public class HeapArray {
 
 				if (!h.change(key, newKey))
 					System.out.println("Invalid index");
+				break;
+
+			case 'q':
+				run = false;
+				s.close();
 				break;
 
 			default:

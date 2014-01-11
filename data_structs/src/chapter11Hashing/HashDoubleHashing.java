@@ -112,9 +112,10 @@ public class HashDoubleHashing {
 			h.insert(new DataItem2(key));
 		}
 
-		while (true) {
+		boolean run = true;
+		while (run) {
 			System.out.println("Select a command from the following: ");
-			System.out.println("(d)isplay, (i)nsert, (r)emove, (f)ind.");
+			System.out.println("(d)isplay, (i)nsert, (r)emove, (f)ind or (q)uit.");
 
 			char choice = s.next().toLowerCase().charAt(0);
 
@@ -148,9 +149,9 @@ public class HashDoubleHashing {
 				break;
 
 			case 'q':
-			case 'x':
-				System.out.println("Bye.");
-				System.exit(0);
+				run = false;
+				s.close();
+				break;
 
 			default:
 				System.out.println("Invalid Entry.");

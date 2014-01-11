@@ -198,6 +198,7 @@ public class HeapSort {
 
 		System.out.printf("Please enter a number\n");
 		int size = s.nextInt();
+		s.close();
 
 		long startTime = System.currentTimeMillis();
 

@@ -287,7 +287,8 @@ public class BinaryTree1 {
 
 		Scanner s = new Scanner(System.in);
 
-		while (true) {
+		boolean run = true;
+		while (run) {
 			System.out.print("Choose from among the following commands:\n");
 			System.out.print("(d)isplay, (i)nsert, (f)ind, (r)emove, (t)raverse or (q)uit.\n");
 			char c = s.next().toLowerCase().charAt(0);
@@ -339,7 +340,8 @@ public class BinaryTree1 {
 				break;
 
 			case 'q':
-				System.exit(0);
+				run = false;
+				s.close();
 				break;
 
 			default:

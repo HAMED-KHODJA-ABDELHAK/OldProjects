@@ -389,9 +389,10 @@ public class Tree234 {
 		t.insert(20);
 		t.insert(90);
 
-		while (true) {
+		boolean run = true;
+		while (run) {
 			System.out.print("Choose from the following commands:\n");
-			System.out.print("(d)isplay, (i)nsert, (m)in or (f)ind.\n");
+			System.out.print("(d)isplay, (i)nsert, (m)in, (f)ind (q)uit.\n");
 
 			char c = s.next().toLowerCase().charAt(0);
 
@@ -429,6 +430,11 @@ public class Tree234 {
 				System.out.print("In order list: \n");
 				String list = "";
 				System.out.println(t.inOrderTraversal(t.getRoot(), list));
+				break;
+
+			case 'q':
+				run = false;
+				s.close();
 				break;
 
 			default:

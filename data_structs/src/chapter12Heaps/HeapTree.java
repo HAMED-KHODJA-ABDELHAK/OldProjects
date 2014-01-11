@@ -235,7 +235,8 @@ public class HeapTree <T> {
 		h.add(10);
 		h.add(90);
 
-		while (true) {
+		boolean run = true;
+		while (run) {
 			System.out.print("Select from one of the following actions:\n");
 			System.out.print("(d)isplay, (i)nsert, (r)emove, (q)uit.\n");
 
@@ -260,8 +261,8 @@ public class HeapTree <T> {
 				break;
 
 			case 'q':
-				System.out.print("Later.");
-				System.exit(0);
+				run = false;
+				s.close();
 				break;
 
 			default:

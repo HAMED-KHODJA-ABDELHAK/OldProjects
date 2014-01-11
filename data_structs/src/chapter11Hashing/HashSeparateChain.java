@@ -152,9 +152,10 @@ public class HashSeparateChain {
 			h.insert(new Link(key));
 		}
 
-		while (true) {
+		boolean run = true;
+		while (run) {
 			System.out.print("Choose from following commands:\n");
-			System.out.print("(d)isplay, (i)nsert, (r)emove, (f)ind.\n");
+			System.out.print("(d)isplay, (i)nsert, (r)emove, (f)ind or (q)uit.\n");
 			char choice  = s.next().toLowerCase().charAt(0);
 
 			switch (choice) {
@@ -181,6 +182,11 @@ public class HashSeparateChain {
 					System.out.print("Found the key.\n");
 				else
 					System.out.print("Could not locate.\n");
+				break;
+
+			case 'q':
+				run = false;
+				s.close();
 				break;
 
 			default:

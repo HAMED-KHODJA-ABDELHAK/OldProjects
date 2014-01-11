@@ -13,6 +13,8 @@ public class Anagram {
 
 		Scanner s = new Scanner(System.in);
 		arrChar = s.next().toCharArray();
+		s.close();
+
 		size = arrChar.length;
 		count = 0;
 		displayWord();

@@ -9,6 +9,7 @@ public class Triangle {
 		System.out.println("Enter a number: ");
 		Scanner s = new Scanner(System.in);
 		number = s.nextInt();
+		s.close();
 
 		int answer = triangle(number);
 		System.out.println("The answer: " + answer);
