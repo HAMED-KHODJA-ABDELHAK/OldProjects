@@ -10,4 +10,8 @@ mpi_cluster: Contains some cluster programming I did during university. See read
 
 data_structs: Contains implementations of some common datastructs including trees, heaps and graphs in Java.
 
+embedded_programming: Some code I did for an embedded course, c programming and makefiles mainly.
+
+distribute_systems: Two decently sized java projects involving network programming.
+
 ncurses: Some experiments with making a curses driven gui, thought I might use this for mpi but didn't need it.
