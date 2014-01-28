@@ -1,0 +1,44 @@
+module CORBAServer {
+	exception CorbaInetAddressException {
+		string message;
+	};
+
+	exception CorbaNotEnoughStockException {
+		string message;
+	};
+
+	exception CorbaIOException {
+		string message;
+  	};
+
+  	exception CorbaInterruptedException {
+  		string message;
+  	};
+
+	typedef struct Stock_s {
+		string storeName; /* Store character, is unique ID. */
+		long num; /* Number of items there. */
+	} Stock_t;
+
+	typedef struct Result_s {
+		boolean success;
+		string message;
+	} Result_t;
+
+	typedef sequence<Stock_t> Stock;
+
+	/* Attempting to stay somewhat close to my original design.	*/
+	interface RetailStore {
+		Result_t buyItems(in string cID, in long itemID, in long numItems, in string initStore)
+			raises(CorbaNotEnoughStockException, CorbaIOException, CorbaInterruptedException);
+
+		Result_t returnItems(in string cID, in long itemID, in long numItems)
+			raises(CorbaIOException, CorbaInterruptedException);
+
+		Result_t exchange(in string cID, in long bItemID, in long bNumItems, in long dItemID, in long dNumItems)
+			raises(CorbaNotEnoughStockException, CorbaIOException, CorbaInterruptedException);
+
+		Stock checkStock(in long itemID) raises(CorbaIOException, CorbaInetAddressException);
+	};
+};
+

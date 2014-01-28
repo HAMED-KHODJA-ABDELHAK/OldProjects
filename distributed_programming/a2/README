@@ -1,0 +1,7 @@
+Special notes on running:
+
+1) Edit the String[] args array in src/corba/client/ClientBase.java to match the hostname of the PC.
+
+2) Add arguments to corba.server.CorbaStarter.java that match these args.
+
+3) I've left some logs in the zip, doesn't impact the demos. You can clean all except the V4500x logs used in the exchange demo.

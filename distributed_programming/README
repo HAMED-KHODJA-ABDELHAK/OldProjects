@@ -1,0 +1,4 @@
+These two programs were for creating distributed systems based on RMI and CORBA respectively. 
+They are interesting for the technologies for network programming.
+I don't think I saved the eclipse settings so see readmes and may need a bit of debugging.
+A decent example of java server programming though by no means best since I was time constrained and taking other courses.

@@ -1,0 +1,11 @@
+Hi.
+
+Find the documentation in a doc in this folder.
+
+In order to run the project, open Eclipse and import all three projects from the top. Note, I do NOT use the RMI plugin. Just stock java.
+
+Next ensure that the Java JRE or an equivalent is available in the project, latest java 6 or 7 should work.
+
+Then simply start up ServerStarter first and then start any of the client test cases under drs.client.
+
+That's it.
