@@ -1,0 +1,36 @@
+#!/bin/bash
+
+function usage() {
+	echo "Usage: ${0##*/} file1.c file2.c ..."
+	echo "Each file will be compiled with the avr-gcc then converted to hex to load."
+	echo "Use arg clean, to remove elf/hex from current directory."
+}
+
+if [ -z  $1 ]; then
+        usage
+        exit 
+fi 
+
+if [ "$1" == "clean" ]; then
+	rm *.elf *.hex
+	exit
+fi
+
+# Takes argument 1 as a filename. 
+function compile() {
+	ext="${1##*.}"
+	name="${1%.*}"
+
+	if [ "$ext" == "c" ]; then
+		avr-gcc -Os -mmcu=at90usb1286 -o "$name".elf "$name".c
+		avr-objcopy -O ihex "$name".elf "$name".hex
+	else
+		echo "That extension isn't supported. $1"
+	fi
+}
+
+for var in "$@"
+do
+    compile "$var"
+done
+

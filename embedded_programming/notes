@@ -1,0 +1,27 @@
+Commands to compile:
+avr-gcc -mmcu=at90usb1286 -o test.elf test.c
+avr-objcopy -O ihex test.elf test.bin
+-> Use arduino teensy loader.
+
+Header Libraries:
+/usr/lib/avr/include
+
+Interrupts:
+char cSREG;
+cSREG = SREG; /* store SREG value */
+/* disable interrupts during timed sequence */
+__disable_interrupt();
+/* Do something. */
+SREG = cSREG;
+
+__enable_interrupt(); /* set Global Interrupt Enable */
+__sleep(); /* enter sleep, waiting for interrupt */
+/* note: will enter sleep before any pending interrupt(s) */
+
+
+Pin Modes:
+DDRx - > 0: Input, 1: Output
+PORTx -> DDRx(Input): 0: Normal, 1: Input Pullup (Ensures 0/1 read)
+	  -> DDRx(Output): 0: Low, 1: High
+PINx  -> Read value of the pins.
+

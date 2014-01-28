@@ -1,0 +1,11 @@
+Steps to setup a Windows PC for Beagle Board.
+
+1) Download and install the prolific usb-to-com driver.
+http://www.robotc.net/download/cortex/
+
+2) Connect the beagle board and have the USB driver installed.
+
+3) Setup Internet Connection sharing, see following Microsoft article.
+http://windows.microsoft.com/en-US/windows-vista/Using-ICS-Internet-Connection-Sharing
+
+4) You should be able to connect ethernet to the board and have it connected to the internet.

@@ -1,0 +1,22 @@
+AVR Build Instructions:
+
+1)
+Install packages, on Ubuntu:
+sudo apt-get install avrdude avr-libc avrdude-doc binutils-avr gcc-avr gdb-avr simulavr
+
+Windows:
+See winAVR -> http://cmtk3.webring.org/l/rd?ring=avr;id=59;url=http%3A%2F%2Fwinavr.sourceforge.net%2F
+
+Other platforms -> http://avr-eclipse.sourceforge.net/wiki/index.php/The_AVR_GCC_Toolchain
+
+2) Set scripts into path:
+The scripts are located inside the git repository for 422. Let GIT be the path to the repo then the following command will set your path. Substitute your path for GIT.
+
+export PATH=GIT/scripts:$PATH
+
+3) Extract Arduino ide either from the git repo or downloaded clean. Requires Java on the path.
+http://arduino.cc/en/Main/Software
+
+4) Follow these steps.
+http://www.pjrc.com/teensy/td_download.html
+
